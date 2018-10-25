@@ -30,11 +30,9 @@ class news_dataset(Dataset):
         self.tokenized_text = self.tokenize(text_path)
         self.tokenized_text_flatten = reduce(operator.concat, self.tokenized_text)
         self.vocab = list(set(self.tokenized_text_flatten))
-        # print(len(self.tokenized_text_flatten), len(self.vocab))
         word_pairs = []
         for sentence in self.tokenized_text:
             for i, word in enumerate(sentence):
-                # start_time = time.time()
                 sentence = np.asarray(sentence)
                 for w in range(-window_size, window_size + 1):
                     context_word_idx = i + w
@@ -43,9 +41,6 @@ class news_dataset(Dataset):
                         continue
                     neg_samples = self.negative_sampling()
                     word_pairs.append((word, sentence[context_word_idx], neg_samples))
-                    # word_pairs.append((word, sentence[context_word_idx]))
-                # total_time = time.time() - start_time
-                # print(total_time)
         return word_pairs
                 
     def tokenize(self, text_path):
@@ -56,9 +51,6 @@ class news_dataset(Dataset):
         return tokens
     
     def negative_sampling(self):
-        # tokenized_text_flatten = reduce(operator.concat, tokenized_text)
-        # print(len(tokenized_text_flatten))
-        # neg_sample = np.random.choice(self.vocab, self.k)
         neg_sample = random.sample(self.vocab, self.k)
         return neg_sample
         

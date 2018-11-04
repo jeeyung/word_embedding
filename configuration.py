@@ -26,8 +26,9 @@ def get_config():
     data_arg.add_argument('--is-character', action='store_true')
 
     train_arg = parser.add_argument_group('Train')
+    train_arg.add_argument('--device', default=0, type=int)
     train_arg.add_argument('--batch-size', default=32, type=int, help='mini-batch size (default: 32)')
-    train_arg.add_argument('--epochs', default=5, type=int, help='number of total epochs (default: 32)')
+    train_arg.add_argument('--epochs', default=10, type=int, help='number of total epochs (default: 10)')
     train_arg.add_argument('--lr', default=0.0002, type=float, help='learning rate (default: 0.0002)')
     train_arg.add_argument('--timestamp', default=datetime.now().strftime("%y%m%d%H%M%S"), type=str)
     train_arg.add_argument('--load-model', action='store_true')

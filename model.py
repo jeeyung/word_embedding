@@ -30,18 +30,34 @@ class generator(nn.Module):
         ordered_output = h[-1].index_select(0, unsort_idx)
         return ordered_output
 
-# class skipgram(nn.Module):
-#     def __init__(self, embedding_dim):
-#         super(skipgram, self).__init__()
-#         self.embedding_dim = embedding_dim
+class skipgram(nn.Module):
+    def __init__(self, vocab_size, embed_size):
+        super(skipgram, self).__init__()
+        self.center_embedding = nn.Embedding(vocab_size, embed_size)
+        self.context_embedding = nn.Embedding(vocab_size, embed_size)
 
-#     def forward(self, x):
-#         _, gen_embed_dim = x.size()
-#         U = torch.randn((self.embedding_dim, gen_embed_dim), requires_grad = True)
-#         z1 = torch.matmul(U, x)
-#         V = torch.randn((gen_embed_dim, self.embedding_dim),requires_grad = True)
-#         z2 = torch.matmul(V, z1)
-#         return z2
+    def pos_loss(self, center, context):
+        score_target = torch.bmm(center.unsqueeze(1), context.unsqueeze(2))
+        loss = -F.logsigmoid(score_target).sum()
+        return loss
+
+    def neg_loss(self, center, ns):
+        center = center.unsqueeze(1).expand_as(ns)
+        score_target = torch.bmm(center, ns.transpose(1, 2))
+        loss = F.logsigmoid(score_target).sum()
+        return loss
+
+    def forward(self, center, context, ns):
+        center = self.center_embedding(center)
+        context = self.context_embedding(context)
+        ns = self.context_embedding(ns)
+        return self.pos_loss(center, context) + self.neg_loss(center, ns)
+        # _, gen_embed_dim = x.size()
+        # U = torch.randn((self.embedding_dim, gen_embed_dim), requires_grad = True)
+        # z1 = torch.matmul(U, x)
+        # V = torch.randn((gen_embed_dim, self.embedding_dim),requires_grad = True)
+        # z2 = torch.matmul(V, z1)
+        # return z2
 
 
 class word_embed(nn.Module):

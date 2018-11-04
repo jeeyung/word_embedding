@@ -1,4 +1,5 @@
 import argparse
+import torch
 from datetime import datetime
 from pathlib import Path
 home = str(Path.home())
@@ -8,6 +9,7 @@ def get_config():
     parser = argparse.ArgumentParser()
 
     model_arg = parser.add_argument_group('Model')
+    model_arg.add_argument('--model-name', default='sgns', type=str)
     model_arg.add_argument('--window-size', default=5, type=int)
     model_arg.add_argument('--embed-size', default=128, type=int)
     model_arg.add_argument('--neg_sample_size', default=5, type=int)
@@ -20,19 +22,22 @@ def get_config():
 
     data_arg = parser.add_argument_group('Data')
     data_arg.add_argument('--data-dir', default='data', type=str, help='directory of training/testing data (default: datasets)')
+    data_arg.add_argument('--dataset', default='toy/merge.txt', type=str)
+    data_arg.add_argument('--is-character', action='store_true')
 
     train_arg = parser.add_argument_group('Train')
     train_arg.add_argument('--batch-size', default=32, type=int, help='mini-batch size (default: 32)')
     train_arg.add_argument('--epochs', default=5, type=int, help='number of total epochs (default: 32)')
     train_arg.add_argument('--lr', default=0.0002, type=float, help='learning rate (default: 0.0002)')
     train_arg.add_argument('--timestamp', default=datetime.now().strftime("%y%m%d%H%M%S"), type=str)
-    train_arg.add_argument('--load-model', action='store_true', default = False)
+    train_arg.add_argument('--load-model', action='store_true')
     train_arg.add_argument('--log-dir', default='saved/runs/', type=str)
 
     # test_arg = parser.add_argument_group('Test')
     # test_arg.add_argument('--load-model', action='store_true', default = False)
 
     args = parser.parse_args()
+    args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     config_list = [args.batch_size, args.vocab_size, args.hidden_size, args.embed_size]
     args.config = '_'.join(list(map(str, config_list)))
     return args

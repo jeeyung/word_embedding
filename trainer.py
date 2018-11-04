@@ -9,27 +9,37 @@ from configuration import get_config
 import torch.optim as optim
 from tensorboardX import SummaryWriter
 import time
+from dataloader import TextDataLoader
 
 def train(args):
     start_time = time.time()
     writer = SummaryWriter(args.log_dir + args.timestamp + args.config)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    model= word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
-                        args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size)
+    text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size, args.window_size, args.neg_sample_size,
+                                 args.is_character)
+    if args.model_name == 'sgns':
+        model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
+    else:
+        model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
+                            args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size)
     model= model.to(device)
     if args.load_model:
         model.load_state_dict(torch.load(args.log_dir + 'model_best.pt'))
         print('Model loaded')
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
-    text_loader = TextDataLoader(args.data_dir, args.batch_size, args.window_size, args.neg_sample_size)
     train_loss = 0
     for epoch in range(args.epochs):
         monitor_loss = 0
-        for i, (center, center_len, context, context_len, neg) in enumerate(text_loader):
+        for i, (center,context, neg) in enumerate(text_loader):
+            if args.is_character:
+                center, center_len = center[0]
+                context, context_len = context
+            center = center.to(device)
+            context = context.to(device)
+            neg = neg.to(device)
             optimizer.zero_grad()
-            loss = model(center, center_len, context, context_len, neg)
+            loss = model(center, context, neg)
             loss.backward()
             optimizer.step()
             monitor_loss += loss.item()

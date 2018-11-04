@@ -26,7 +26,9 @@ def run(rank, size):
     queue = mp.Queue()
     # for index, number in range():
     crawler = Process(target=crawl, args=(queue,))
-    trainer = Process(target=train, args=(get_config(), queue,))
+    args = get_config()
+    args.queue = queue
+    trainer = Process(target=train, args=(args,))
     crawler.start()
     trainer.start()
 

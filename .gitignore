@@ -107,3 +107,9 @@ ENV/
 
 Experiments.ipynb
 Untitled.ipynb
+.idea/
+__pycache__/
+saved/
+data
+*.pkl
+*.pt

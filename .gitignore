@@ -1,6 +1,12 @@
+twitterCrawl.py
 .idea/
 __pycache__/
 saved/
 data
+corpus/
 *.pkl
 *.pt
+*.csv
+*.tsv
+*.txt
+*.tab

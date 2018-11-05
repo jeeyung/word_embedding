@@ -4,10 +4,6 @@ import multiprocessing as mp
 
 class TwitterCrawler:
     def __init__(self):
-        self.CONSUMER_KEY = "euEIj2HoqGtwEH3ZmT3s8LRzM"
-        self.CONSUMER_SECRET = "3Gign2g0DEV5RhaIfZJMkForTSThRhDMuTePb1cnMWJK2L2WNg"
-        self.ACCESS_TOKEN = "108031820-8fmQ91pKAzRH6tH27cv2cdN3GiXksUjTu0pDku3H"
-        self.ACCESS_TOKEN_SECRET = "GxfzEkGh5KJ53bAlsHJiwR4f1R2CG1Vytn03jHN9Ifc0k"
         self.SAVE_FILE = "/twitter.txt"
         self.api = self.generateAPI()
 

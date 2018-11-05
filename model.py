@@ -6,6 +6,9 @@ from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 import numpy as np
 from dataloader import *
 import time 
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 class generator(nn.Module):
     def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout):
         super(generator, self).__init__()
@@ -19,6 +22,8 @@ class generator(nn.Module):
         unsort_idx = np.argsort(sort_idx)[::-1]#[]
         sort_idx= torch.from_numpy(sort_idx.copy()).to(device)
         unsort_idx = torch.from_numpy(unsort_idx.copy()).to(device)
+        # sort_idx= torch.from_numpy(sort_idx.copy())
+        # unsort_idx = torch.from_numpy(unsort_idx.copy())
         x = x.index_select(0, sort_idx)
         return x, unsort_idx, x_ordered
 

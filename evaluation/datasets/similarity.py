@@ -35,7 +35,7 @@ def fetch_MTurk():
 
     Additionally scores were multiplied by factor of 2.
     """
-    data = pd.read_csv('corpus/MTURK-771.csv', header=None, sep=",").values
+    data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/MTURK-771.csv'), header=None, sep=",").values
     # data = _get_as_pd('https://www.dropbox.com/s/f1v4ve495mmd9pw/EN-TRUK.txt?dl=1',
     #                   'similarity', header=None, sep=" ").values
     return Bunch(X=data[:, 0:2].astype("object"),
@@ -73,15 +73,15 @@ def fetch_MEN(which="all", form="natural"):
     implementing semantic similarity and relatedness measures.
     """
     if which == "dev":
-        data = pd.read_csv('corpus/MEN/MEN_dataset_lemma_form.dev', header=None, sep=" ")
+        data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/MEN/MEN_dataset_lemma_form.dev'), header=None, sep=" ")
         # data = _get_as_pd('https://www.dropbox.com/s/c0hm5dd95xapenf/EN-MEN-LEM-DEV.txt?dl=1',
         #                   'similarity', header=None, sep=" ")
     elif which == "test":
-        data = pd.read_csv('corpus/MEN/MEN_dataset_lemma_form.test', header=None, sep=" ")
+        data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/MEN/MEN_dataset_lemma_form.test'), header=None, sep=" ")
         # data = _get_as_pd('https://www.dropbox.com/s/vdmqgvn65smm2ah/EN-MEN-LEM-TEST.txt?dl=1',
         #                   'similarity/EN-MEN-LEM-TEST', header=None, sep=" ")
     elif which == "all":
-        data = pd.read_csv('corpus/MEN/MEN_dataset_lemma_form_full', header=None, sep=" ")
+        data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/MEN/MEN_dataset_lemma_form_full'), header=None, sep=" ")
         # data = _get_as_pd('https://www.dropbox.com/s/b9rv8s7l32ni274/EN-MEN-LEM.txt?dl=1',
         #                   'similarity', header=None, sep=" ")
     else:
@@ -124,7 +124,7 @@ def fetch_WS353(which="all"):
         'sd': vector of std of scores if available (for set1 and set2)
     """
     if which == "all":
-        data = pd.read_csv('corpus/wordsim/combined.csv', header=0, sep=",")
+        data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/wordsim/combined.csv'), header=0, sep=",")
         # data = _get_as_pd('https://www.dropbox.com/s/eqal5qj97ajaycz/EN-WS353.txt?dl=1',
         #                   'similarity', header=0, sep="\t")
     # elif which == "relatedness":
@@ -211,7 +211,7 @@ def fetch_RW():
     frequencies above five, there are still many non-English words. To counter such problems,
     each word selected is required to have a non-zero number of synsets in WordNet(Miller, 1995).
     """
-    data = pd.read_csv('corpus/rare_words.tsv', header=None, sep="\t").values
+    data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/rare_words.tsv'), header=None, sep="\t").values
     # data = _get_as_pd('https://www.dropbox.com/s/xhimnr51kcla62k/EN-RW.txt?dl=1',
     #                   'similarity', header=None, sep="\t").values
     return Bunch(X=data[:, 0:2].astype("object"),
@@ -305,7 +305,7 @@ def fetch_SimLex999():
      difference - note that clothes are not similar to closets (different materials, function etc.),
      even though they are very much related: coast - shore 9.00 9.10, clothes - closet 1.96 8.00
     """
-    data = pd.read_csv('corpus/SimLex-999.txt', header=0, sep="\t")
+    data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/SimLex-999.txt'), header=0, sep="\t")
     # data = _get_as_pd('https://www.dropbox.com/s/0jpa1x8vpmk3ych/EN-SIM999.txt?dl=1',
     #                   'similarity', sep="\t")
 

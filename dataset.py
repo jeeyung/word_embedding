@@ -7,25 +7,37 @@ import re
 import random
 import operator
 from functools import reduce
-
+from nltk.corpus import stopwords
+import bz2
 
 class TextDataset(Dataset):
     def __init__(self, data_dir, dataset, window_size, ns_size, is_character):
-        self.data_dir = os.path.join(data_dir, dataset)
+        self.dataset_dir = os.path.join(data_dir, dataset)
         data_config_list = [dataset, window_size, ns_size, is_character]
         self.data_file = '_'.join(map(str, data_config_list)) + '.pkl'
         self.file_dir = os.path.join(data_dir, self.data_file)
         self.window_size = window_size
         self.ns_size = ns_size
         self.is_character = is_character
+        self.stopwords = set(stopwords.words('english'))
         if not self.is_data_exist():
-            self.make_dataset()
+            if self.dataset_dir.endswith(".bz2"):
+                with open(self.dataset_dir, "rb") as f:
+                    file = bz2.decompress(f.read())
+                    self.open_file(file)
+            else:
+                self.open_file(self.dataset_dir)
+
         with open(self.file_dir, 'rb') as f:
             if is_character:
                 self.word_pairs, self.vocabs, self.char2idx, self.idx2char = pkl.load(f)
             else:
                 self.word_pairs, self.vocabs, self.word2idx, self.idx2word = pkl.load(f)
-
+    
+    def open_file(self, file_name):
+        self.text = open(file_name, encoding="utf-8").read().lower().strip()
+        self.make_dataset()
+        
     def is_data_exist(self):
         if os.path.isfile(self.file_dir):
             print("Data {} exist".format(self.data_file))
@@ -36,7 +48,7 @@ class TextDataset(Dataset):
 
     def make_dataset(self):
         print("Start to make data")
-        tokenized_text = self.tokenize(self.data_dir)
+        tokenized_text = self.tokenize()
         tokenized_text_flatten = reduce(operator.concat, tokenized_text)
         self.vocabs = list(set(tokenized_text_flatten))
         if self.is_character:
@@ -65,12 +77,17 @@ class TextDataset(Dataset):
             pkl.dump(saves, f, protocol=pkl.HIGHEST_PROTOCOL)
             print("Data saved in {}".format(self.data_file))
 
-    def tokenize(self, text_path):
-        text = open(text_path, encoding="utf-8").read().lower().strip()
-        text = re.sub('[^A-Za-z]+', " ", text)
+    def tokenize(self):
+        text = re.sub('[^A-Za-z.]+', " ", self.text)
         text = text.split(".")
-        tokens = [sen.split() for sen in text]
-        return tokens
+        tokens_list=[]
+        for sen in text:
+            tokens=[]
+            for word in sen.split():
+                if word not in self.stopwords:
+                    tokens.append(word)
+            tokens_list.append(tokens) 
+        return tokens_list
 
     def map_char_idx(self):
         alphabet = 'abcdefghijklmnopqrstuvwxyz'
@@ -248,6 +265,6 @@ class TextDataset(Dataset):
 #     def __len__(self):
 #         return len(self.word_pairs)
 if __name__ == '__main__':
-    text_dataset = TextDataset('./data', 'toy/merge.txt', 5, 5, False)
+    text_dataset = TextDataset('./data', 'toy/merge.txt', 5, 5, True)
     index = 1
     print(text_dataset.word_pairs[index])

@@ -48,39 +48,20 @@ class skipgram(nn.Module):
 
     def neg_loss(self, center, ns):
         score_target = torch.bmm(center.unsqueeze(1), ns.transpose(1, 2))
-        loss = F.logsigmoid(score_target).sum()
+        loss = F.logsigmoid(-score_target).sum()
         return loss
 
     def forward(self, center, context, ns):
         center = self.center_embedding(center)
         context = self.context_embedding(context)
-        ns = self.context_embedding(ns)
-        return self.pos_loss(center, context) + self.neg_loss(center, ns)
+        ns = self.context_embedding(ns) #[32,5,128]
+        return -self.pos_loss(center, context) + -self.neg_loss(center, ns)
         # _, gen_embed_dim = x.size()
         # U = torch.randn((self.embedding_dim, gen_embed_dim), requires_grad = True)
         # z1 = torch.matmul(U, x)
         # V = torch.randn((gen_embed_dim, self.embedding_dim),requires_grad = True)
         # z2 = torch.matmul(V, z1)
         # return z2
-
-
-class word_embed(nn.Module):
-    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, last_hidden):
-        super(word_embed, self).__init__()
-        self.center_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout)
-        self.context_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout)
-        self.mlp = nn.Linear(hidden_size, last_hidden)
-
-    def cal_loss(self, x, y):
-        score_target = torch.bmm(x.unsqueeze(1),y.unsqueeze(2))
-        loss = -F.logsigmoid(score_target).sum() 
-        return loss
-
-    def forward(self, x, x_len, y, y_len):
-        prediction = self.mlp(self.center_generator(x, x_len))
-        target = self.mlp(self.context_generator(y, y_len))
-        loss = self.cal_loss(prediction, target)
-        return loss
 
 class word_embed_ng(nn.Module):
     def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, last_hidden, k):

@@ -38,7 +38,7 @@ def get_config():
     # test_arg.add_argument('--load-model', action='store_true', default = False)
     
     args = parser.parse_args()
-    args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    args.device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     config_list = [args.batch_size, args.vocab_size, args.hidden_size, args.embed_size]
     args.config = '_'.join(list(map(str, config_list)))
     return args

@@ -14,7 +14,7 @@ from dataloader import TextDataLoader
 def train(args):
     start_time = time.time()
     writer = SummaryWriter(args.log_dir + args.timestamp + args.config)
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = args.device
     text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                  args.is_character)
     if args.is_character:

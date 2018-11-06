@@ -10,11 +10,9 @@ import torch.optim as optim
 from tensorboardX import SummaryWriter
 import time
 from dataloader import TextDataLoader
-import bz2 
-from bz2 import decompress
 
 def train(args):
-    datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L","M"] 
+    datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
     writer = SummaryWriter(args.log_dir + args.timestamp + args.config)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     for epoch in len(args.epochs):

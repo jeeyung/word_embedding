@@ -43,7 +43,7 @@ class skipgram(nn.Module):
 
     def pos_loss(self, center, context):
         score_target = torch.bmm(center.unsqueeze(1), context.unsqueeze(2))
-        loss = -F.logsigmoid(score_target).sum()
+        loss = F.logsigmoid(score_target).sum()
         return loss
 
     def neg_loss(self, center, ns):

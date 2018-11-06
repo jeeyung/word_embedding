@@ -32,6 +32,7 @@ def get_config():
     train_arg.add_argument('--log_frequency', default=1000, type=int)
     train_arg.add_argument('--timestamp', default=datetime.now().strftime("%y%m%d%H%M%S"), type=str)
     train_arg.add_argument('--load-model', action='store_false')
+    train_arg.add_argument('--load-model-code', type=str)
     train_arg.add_argument('--log-dir', default='saved/runs/', type=str)
 
     # test_arg = parser.add_argument_group('Test')

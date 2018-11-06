@@ -199,19 +199,10 @@ def fetch_msr_analogy():
     We then systematically generated analogy questions by randomly matching each of the 100 words with 5 other words
     from the same category, and creating variants.
     """
-    url = "https://www.dropbox.com/s/ne0fib302jqbatw/EN-MSR.txt?dl=1"
-    with open(_fetch_file(url, "analogy/EN-MSR", verbose=0), "r") as f:
-        L = f.read().splitlines()
-
-    # Typical 4 words analogy questions
-    questions = []
-    answers = []
-    category = []
-    for l in L:
-        words = standardize_string(l).split()
-        questions.append(words[0:3])
-        answers.append(words[4])
-        category.append(words[3])
+    questions = pd.read_csv('corpus/msr_questions.txt', header=None, sep=" ").values
+    answers = pd.read_csv('corpus/msr_answers.txt', header=None, sep=" ")
+    category = answers[0]
+    answers = answers[1]
 
     verb = set([c for c in set(category) if c.startswith("VB")])
     noun = set([c for c in set(category) if c.startswith("NN")])

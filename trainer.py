@@ -13,8 +13,7 @@ from dataloader import TextDataLoader
 
 def train(args):
     start_time = time.time()
-    writer = SummaryWriter(args.log_dir + args.timestamp + args.config)
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = args.device
     text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                  args.is_character)
     if args.is_character:
@@ -26,9 +25,11 @@ def train(args):
                             args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size)
     model= model.to(device)
     if args.load_model:
-        model.load_state_dict(torch.load(args.log_dir + 'model_best.pt'))
+        model.load_state_dict(torch.load(args.log_dir + args.load_model_code + '/model_best.pt'))
+        args.timestamp = args.load_model_code[:12]
         print('Model loaded')
 
+    writer = SummaryWriter(args.log_dir + args.timestamp + args.config)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     train_loss = 0
     for epoch in range(args.epochs):
@@ -63,7 +64,7 @@ def train(args):
         monitor_loss/ len(text_loader.dataset),
         time.time() - start_time))
         if train_loss > monitor_loss:
-            torch.save(model.state_dict(), args.log_dir + 'model_best.pt')
+            torch.save(model.state_dict(), args.log_dir + args.timestamp + args.config + '/model_best.pt')
         train_loss = monitor_loss
     writer.add_scalar('Train loss', train_loss / len(text_loader.dataset), (epoch+1))
 

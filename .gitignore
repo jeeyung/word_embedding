@@ -9,3 +9,5 @@ corpus/
 *.tsv
 *.txt
 *.tab
+*.ipynb
+.vscode/

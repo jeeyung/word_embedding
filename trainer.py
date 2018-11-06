@@ -17,6 +17,8 @@ def train(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                  args.is_character)
+    if args.is_character:
+        args.model_name = "cha-level"
     if args.model_name == 'sgns':
         model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
     else:

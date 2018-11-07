@@ -42,7 +42,7 @@ def get_config():
     
     args = parser.parse_args()
     args.device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
-    config_list = [args.model_name, args.embed_size,\
+    config_list = [args.model_name, args.embed_size, args.hidden_size\
                    args.dataset, args.window_size, args.neg_sample_size, args.is_character,\
                    args.device, args.batch_size, args.epochs, args.lr]
     args.config = '_'.join(list(map(str, config_list))).replace("/", ".")

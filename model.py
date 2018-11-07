@@ -47,8 +47,8 @@ class skipgram(nn.Module):
         return loss
 
     def neg_loss(self, center, ns):
-        score_target = torch.bmm(center.unsqueeze(1), ns.transpose(1, 2))
-        loss = F.logsigmoid(-score_target).sum()
+        score_neg = torch.bmm(center.unsqueeze(1), ns.transpose(1, 2))
+        loss = F.logsigmoid(-score_neg).sum()
         return loss
 
     def forward(self, center, context, ns):
@@ -73,9 +73,7 @@ class word_embed_ng(nn.Module):
 
     def cal_loss(self, x, y, neg):
         score_target = torch.bmm(x.unsqueeze(1),y.unsqueeze(2))
-        score_neg = 0
-        for i in range(self.k):
-            score_neg += torch.bmm(x.unsqueeze(1), neg[i].unsqueeze(2))
+        score_neg = torch.bmm(x.unsqueeze(1), neg.transpose(0,1).transpose(1,2))
         loss = -F.logsigmoid(score_target).sum() + -F.logsigmoid(-score_neg).sum()
         return loss
 
@@ -85,7 +83,8 @@ class word_embed_ng(nn.Module):
         neg_output =[]
         for i in range(self.k):
             neg_output.append(self.mlp(self.context_generator(neg[i][0], neg[i][1])))
-        loss = self.cal_loss(prediction, target, neg_output)
+        neg_output_tensor = torch.stack(neg_output)
+        loss = self.cal_loss(prediction, target, neg_output_tensor)
         return loss
 
 if __name__=='__main__':

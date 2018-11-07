@@ -21,12 +21,7 @@ class TextDataset(Dataset):
         self.is_character = is_character
         self.stopwords = set(stopwords.words('english'))
         if not self.is_data_exist():
-            if self.dataset_dir.endswith(".bz2"):
-                with open(self.dataset_dir, "rb") as f:
-                    file = bz2.decompress(f.read())
-                    self.open_file(file)
-            else:
-                self.open_file(self.dataset_dir)
+            self.open_file()
 
         with open(self.file_dir, 'rb') as f:
             if is_character:
@@ -34,10 +29,13 @@ class TextDataset(Dataset):
             else:
                 self.word_pairs, self.vocabs, self.word2idx, self.idx2word = pkl.load(f)
     
-    def open_file(self, file_name):
-        self.text = open(file_name, encoding="utf-8").read().lower().strip()
+    def open_file(self):
+        if self.dataset_dir.endswith(".bz2"):
+            self.text = bz2.BZ2File(self.dataset_dir).read().decode("utf-8").lower().strip()
+        else:
+            self.text = open(self.dataset_dir, encoding="utf-8").read().lower().strip()
         self.make_dataset()
-        
+
     def is_data_exist(self):
         if os.path.isfile(self.file_dir):
             print("Data {} exist".format(self.data_file))
@@ -49,6 +47,7 @@ class TextDataset(Dataset):
     def make_dataset(self):
         print("Start to make data")
         tokenized_text = self.tokenize()
+        print("compelete tokenize")
         tokenized_text_flatten = reduce(operator.concat, tokenized_text)
         self.vocabs = list(set(tokenized_text_flatten))
         if self.is_character:
@@ -78,7 +77,9 @@ class TextDataset(Dataset):
             print("Data saved in {}".format(self.data_file))
 
     def tokenize(self):
-        text = re.sub('[^A-Za-z.]+', " ", self.text)
+        text = re.sub("(january|febuary|march|april|may|june|july|august|september|october|november|december)", " ", self.text)
+        text = re.sub('<.*>'," ", text)
+        text = re.sub('[^A-Za-z.]+', " ", text)
         text = text.split(".")
         tokens_list=[]
         for sen in text:

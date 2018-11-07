@@ -10,21 +10,25 @@ import torch.optim as optim
 from tensorboardX import SummaryWriter
 import time
 from dataloader import TextDataLoader
+import os 
 
 def train(args):
     datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
     writer = SummaryWriter(args.log_dir + args.timestamp + args.config)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    for epoch in len(args.epochs):
+    for epoch in range(args.epochs):
         dataset_order = 0
         total_dataset_num = 0
         train_loss= 0
         for dataset_dir in datasetlist_dir:
             for k in range(100):
                 start_time = time.time()
-                dataset = os.path.join(dataset_dir, '/wiki_{0:02d}.bz2'.format(k))
+                wiki_datadir = 'extracted_wiki/' + dataset_dir
+                dataset = os.path.join(wiki_datadir, 'wiki_{0:02d}.bz2'.format(k))
                 text_loader = TextDataLoader(args.data_dir, dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                         args.is_character)
+                if args.is_character:
+                    args.model_name = "cha-level"
                 if args.model_name == 'sgns':
                     model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
                 else:
@@ -66,7 +70,7 @@ def train(args):
                 dataset_order,
                 train_loss/ total_dataset_num,
                 time.time() - start_time))
-                torch.save(model.state_dict(), args.log_dir + '/'+ f'{dataset_order}_model.pt')
+                torch.save(model.state_dict(), args.log_dir + f'{dataset_order}_model.pt')
                 writer.add_scalar('Train loss', train_loss / total_dataset_num, dataset_order)
 
 if __name__ =='__main__':

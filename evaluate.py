@@ -17,14 +17,16 @@ def evaluate(args):
     word2idx = text_loader.dataset.word2idx
 
     # load trained model
-    args.model_name = 'sgns'
-    if args.model_name == 'sgns':
-        model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
-    model = model.to(device)
-    model.load_state_dict(torch.load(args.log_dir + 'model_best.pt'))
+    # args.model_name = 'sgns'
+    # if args.model_name == 'sgns':
+    #     model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
+    # model = model.to(device)
+    # model.load_state_dict(torch.load(args.log_dir + 'model_best.pt'))
+    params = torch.load(args.log_dir + 'model_best.pt', map_location=lambda storage, loc: storage)
     print("Model loaded")
 
-    embedding = model.center_embedding
+    # embedding = model.center_embedding
+    embedding = params['center_embedding.weight']
     w_skipgram = build_embedding_map(word2idx, embedding)
 
     tasks = {
@@ -43,7 +45,7 @@ def evaluate(args):
 def build_embedding_map(word2idx, embedding_matrix):
     embedding_map = {}
     for word in word2idx.keys():
-        embedding_map[word] = embedding_matrix(torch.LongTensor([word2idx[word]])).detach()
+        embedding_map[word] = embedding_matrix[torch.LongTensor([word2idx[word]])]
     return embedding_map
 
 if __name__ == "__main__":

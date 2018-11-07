@@ -15,7 +15,7 @@ def train(args):
     start_time = time.time()
     device = args.device
     text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size, args.window_size, args.neg_sample_size,
-                                 args.is_character)
+                                 args.is_character, args.num_workers)
     if args.is_character:
         args.model_name = "cha-level"
     if args.model_name == 'sgns':
@@ -65,8 +65,9 @@ def train(args):
         time.time() - start_time))
         if train_loss > monitor_loss:
             torch.save(model.state_dict(), args.log_dir + args.timestamp + args.config + '/model_best.pt')
+            print("Model saved")
         train_loss = monitor_loss
-    writer.add_scalar('Train loss', train_loss / len(text_loader.dataset), (epoch+1))
+        writer.add_scalar('Train loss', train_loss / len(text_loader.dataset), (epoch+1))
 
 if __name__ =='__main__':
     train(get_config())

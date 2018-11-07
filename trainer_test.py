@@ -14,19 +14,19 @@ import os
 
 def train(args):
     datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
-    writer = SummaryWriter(args.log_dir + args.timestamp + args.config)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     for epoch in range(args.epochs):
         dataset_order = 0
         total_dataset_num = 0
         train_loss= 0
+        monitor_loss = 0
         for dataset_dir in datasetlist_dir:
             for k in range(100):
                 start_time = time.time()
                 wiki_datadir = 'extracted_wiki/' + dataset_dir
                 dataset = os.path.join(wiki_datadir, 'wiki_{0:02d}.bz2'.format(k))
                 text_loader = TextDataLoader(args.data_dir, dataset, args.batch_size, args.window_size, args.neg_sample_size,
-                                        args.is_character)
+                                        args.is_character, args.num_worker)
                 if args.is_character:
                     args.model_name = "cha-level"
                 if args.model_name == 'sgns':
@@ -36,9 +36,10 @@ def train(args):
                                         args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size)
                 model= model.to(device)
                 if args.load_model:
-                    model.load_state_dict(torch.load(args.log_dir + 'model_best.pt'))
+                    model.load_state_dict(torch.load(args.log_dir + args.load_model_code + '/model_best.pt'))
+                    args.timestamp = args.load_model_code[:12]
                     print('Model loaded')
-
+                writer = SummaryWriter(args.log_dir + args.timestamp + args.config)
                 optimizer = optim.Adam(model.parameters(), lr=args.lr)
                 for i, (center,context, neg) in enumerate(text_loader):
                     if args.is_character:
@@ -56,7 +57,7 @@ def train(args):
                         loss = model(center, context, neg)
                     loss.backward()
                     optimizer.step()
-                    train_loss += loss.item()
+                    monitor_loss += loss.item()
                     if i % args.log_frequency == 0:
                         print('Train dataset: {} [{}/{} ({:.0f}%)] Loss: {:.8f}'.format(
                             (dataset_order), i* args.batch_size, len(text_loader.dataset),
@@ -68,9 +69,12 @@ def train(args):
                 total_dataset_num += len(text_loader.dataset)
                 print('====> Dataset: {} Average loss: {:.4f} / Time: {:.4f}'.format(
                 dataset_order,
-                train_loss/ total_dataset_num,
+                monitor_loss/ total_dataset_num,
                 time.time() - start_time))
-                torch.save(model.state_dict(), args.log_dir + f'{dataset_order}_model.pt')
+                if train_loss > monitor_loss:
+                    torch.save(model.state_dict(), args.log_dir + args.timestamp + args.config + '/model_best.pt')
+                    print("Model saved")
+                train_loss = monitor_loss
                 writer.add_scalar('Train loss', train_loss / total_dataset_num, dataset_order)
 
 if __name__ =='__main__':

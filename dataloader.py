@@ -47,12 +47,12 @@ def collate_text(list_inputs):
 #     return padded_input, input_len
 
 class TextDataLoader(DataLoader):
-    def __init__(self, data_dir, dataset, batch_size, window_size, ns_size, is_character):
+    def __init__(self, data_dir, dataset, batch_size, window_size, ns_size, is_character, num_workers):
         self.dataset = TextDataset(data_dir, dataset, window_size, ns_size, is_character)
         if is_character:
-            super(TextDataLoader, self).__init__(self.dataset, batch_size, collate_fn=collate_text)
+            super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers, collate_fn=collate_text)
         else:
-            super(TextDataLoader, self).__init__(self.dataset, batch_size)
+            super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers)
 
 
 if __name__ == '__main__':

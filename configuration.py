@@ -30,11 +30,13 @@ def get_config():
     train_arg.add_argument('--batch-size', default=32, type=int, help='mini-batch size (default: 32)')
     train_arg.add_argument('--epochs', default=10, type=int, help='number of total epochs (default: 10)')
     train_arg.add_argument('--lr', default=0.0002, type=float, help='learning rate (default: 0.0002)')
-    train_arg.add_argument('--log_frequency', default=1000, type=int)
+    train_arg.add_argument('--log-frequency', default=1000, type=int)
     train_arg.add_argument('--timestamp', default=datetime.now().strftime("%y%m%d%H%M%S"), type=str)
     train_arg.add_argument('--load-model', default=None, type=str)
+    train_arg.add_argument('--load-model-code', type=str)
     train_arg.add_argument('--log-dir', default='saved/runs/', type=str)
-
+    #for large dataset dataloader
+    train_arg.add_argument('--num-worker', default=0, type=int)
     # test_arg = parser.add_argument_group('Test')
     # test_arg.add_argument('--load-model', action='store_true', default = False)
     

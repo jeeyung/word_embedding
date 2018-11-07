@@ -64,7 +64,7 @@ def train(args):
         monitor_loss/ len(text_loader.dataset),
         time.time() - start_time))
         if train_loss > monitor_loss:
-            torch.save(model.state_dict(), args.log_dir + args.timestamp + args.config + '/model_best.pt')
+            torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')
             print("Model saved")
         train_loss = monitor_loss
         writer.add_scalar('Train loss', train_loss / len(text_loader.dataset), (epoch+1))

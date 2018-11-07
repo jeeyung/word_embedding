@@ -23,7 +23,7 @@ def train(args):
         for dataset_dir in datasetlist_dir:
             for k in range(100):
                 start_time = time.time()
-                wiki_datadir = 'extracted_wiki/' + dataset_dir
+                wiki_datadir = args.dataset + dataset_dir
                 dataset = os.path.join(wiki_datadir, 'wiki_{0:02d}.bz2'.format(k))
                 text_loader = TextDataLoader(args.data_dir, dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                         args.is_character, args.num_worker)
@@ -72,7 +72,7 @@ def train(args):
                 monitor_loss/ total_dataset_num,
                 time.time() - start_time))
                 if train_loss > monitor_loss:
-                    torch.save(model.state_dict(), args.log_dir + args.timestamp + args.config + '/model_best.pt')
+                    torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')
                     print("Model saved")
                 train_loss = monitor_loss
                 writer.add_scalar('Train loss', train_loss / total_dataset_num, dataset_order)

@@ -29,7 +29,7 @@ def train(args):
         args.timestamp = args.load_model_code[:12]
         print('Model loaded')
 
-    writer = SummaryWriter(args.log_dir + args.timestamp + args.config)
+    writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     train_loss = 0
     for epoch in range(args.epochs):

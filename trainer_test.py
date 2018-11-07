@@ -39,7 +39,7 @@ def train(args):
                     model.load_state_dict(torch.load(args.log_dir + args.load_model_code + '/model_best.pt'))
                     args.timestamp = args.load_model_code[:12]
                     print('Model loaded')
-                writer = SummaryWriter(args.log_dir + args.timestamp + args.config)
+                writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)
                 optimizer = optim.Adam(model.parameters(), lr=args.lr)
                 for i, (center,context, neg) in enumerate(text_loader):
                     if args.is_character:

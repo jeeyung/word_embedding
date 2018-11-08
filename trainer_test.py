@@ -10,7 +10,8 @@ import torch.optim as optim
 from tensorboardX import SummaryWriter
 import time
 from dataloader import TextDataLoader
-import os 
+import os
+import math 
 
 def train(args):
     datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
@@ -66,7 +67,7 @@ def train(args):
                             (dataset_order), i* args.batch_size, len(text_loader.dataset),
                             100. * i / len(text_loader),
                             loss/args.batch_size))
-                        step = i // args.log_frequency + total_dataset_num // args.log_frequency
+                        step = i // args.log_frequency + math.ceil(total_dataset_num // args.batch_size // args.log_frequency)
                         writer.add_scalar('Batch loss', loss / args.batch_size, step)
                 dataset_order += 1
                 total_dataset_num += len(text_loader.dataset)
@@ -74,7 +75,7 @@ def train(args):
                 dataset_order,
                 monitor_loss/ total_dataset_num,
                 time.time() - start_time))
-                if train_loss > monitor_loss:
+                if train_loss > monitor_loss/total_dataset_num:
                     torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')
                     print("Model saved")
                 train_loss = monitor_loss/total_dataset_num

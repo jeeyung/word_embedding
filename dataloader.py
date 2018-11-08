@@ -29,23 +29,6 @@ def collate_text(list_inputs):
         neg.append((padded_neg, neg_len))
     return (padded_center, center_list), (padded_context, context_list), neg
 
-# def collate_text_ng(list_inputs):
-#     batch = len(list_inputs)
-#     padded_center, center_list = create_list(list_inputs[i,0], batch)
-#     padded_context, context_list = create_list(list_inputs[:,1], batch)
-#     neg = []
-#     for i in range(7):
-#         neg.append((create_list(list_inputs[:,2][i], batch)))
-#     return padded_center, center_list, padded_context, context_list, neg
-#
-# def create_list(raw_input, batch):
-#     input_len = [len(raw_input[i][0]) for i in range(batch)]
-#     max_len = max(input_len)
-#     padded_input = torch.zeros(batch, max_len, dtype = torch.long, device = device)
-#     for i in range(batch):
-#         padded_input[i, :input_len[i]] = raw_input[i]
-#     return padded_input, input_len
-
 class TextDataLoader(DataLoader):
     def __init__(self, data_dir, dataset, batch_size, window_size, ns_size, is_character, num_workers):
         self.dataset = TextDataset(data_dir, dataset, window_size, ns_size, is_character)
@@ -53,7 +36,6 @@ class TextDataLoader(DataLoader):
             super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers, collate_fn=collate_text)
         else:
             super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers)
-
 
 if __name__ == '__main__':
     is_character = False

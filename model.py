@@ -17,13 +17,11 @@ class generator(nn.Module):
                     dropout=dropout, batch_first = True)
                 
     def sorting(self, x, x_len):
-        x_ordered = np.sort(x_len)[::-1]#내림차순
+        x_ordered = np.sort(x_len)[::-1]
         sort_idx = np.argsort(x_len)[::-1]
-        unsort_idx = np.argsort(sort_idx)[::-1]#[]
+        unsort_idx = np.argsort(sort_idx)[::-1]
         sort_idx= torch.from_numpy(sort_idx.copy()).to(device)
         unsort_idx = torch.from_numpy(unsort_idx.copy()).to(device)
-        # sort_idx= torch.from_numpy(sort_idx.copy())
-        # unsort_idx = torch.from_numpy(unsort_idx.copy())
         x = x.index_select(0, sort_idx)
         return x, unsort_idx, x_ordered
 
@@ -56,12 +54,6 @@ class skipgram(nn.Module):
         context = self.context_embedding(context)
         ns = self.context_embedding(ns) #[32,5,128]
         return -self.pos_loss(center, context) + -self.neg_loss(center, ns)
-        # _, gen_embed_dim = x.size()
-        # U = torch.randn((self.embedding_dim, gen_embed_dim), requires_grad = True)
-        # z1 = torch.matmul(U, x)
-        # V = torch.randn((gen_embed_dim, self.embedding_dim),requires_grad = True)
-        # z2 = torch.matmul(V, z1)
-        # return z2
 
 class word_embed_ng(nn.Module):
     def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, last_hidden, k):
@@ -98,7 +90,6 @@ if __name__=='__main__':
     for i, (pc, cl, pco, col, neg) in enumerate(text_loader):
         start_time = time.time()
         output = model(pco, col, pco, col, neg)
-        # print(output.shape)
         total_time = time.time() - start_time
         print(output, total_time)
         

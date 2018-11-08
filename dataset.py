@@ -10,9 +10,21 @@ from functools import reduce
 from nltk.corpus import stopwords
 import bz2
 import _pickle as cPickle
-from multiprocessing import Process
+from multiprocessing import Process, Pool
 import multiprocessing as mp
+from collections import Counter
+from functools import wraps
+import time
 # from sklearn.externals import joblib
+
+def timefn(fn):
+    def wrap(*args):
+        t1 = time.time()
+        result = fn(*args)
+        t2 = time.time()
+        print("@timefn:{} took {} seconds".format(fn.__name__, t2-t1))
+        return result
+    return wrap
 
 class TextDataset(Dataset):
     def __init__(self, data_dir, dataset, window_size, ns_size, is_character):
@@ -24,7 +36,6 @@ class TextDataset(Dataset):
         self.ns_size = ns_size
         self.is_character = is_character
         self.stopwords = set(stopwords.words('english'))
-        # self.counter = counter
         if not self.is_data_exist():
             self.open_file()
 
@@ -38,10 +49,10 @@ class TextDataset(Dataset):
     
     def open_file(self):
         if self.dataset_dir.endswith(".bz2"):
-            self.text = bz2.BZ2File(self.dataset_dir).read().decode("utf-8").lower().strip()
+            text = bz2.BZ2File(self.dataset_dir).read().decode("utf-8").lower().strip()
         else:
-            self.text = open(self.dataset_dir, encoding="utf-8").read().lower().strip()
-        self.make_dataset()
+            text = open(self.dataset_dir, encoding="utf-8").read().lower().strip()
+        self.make_dataset(text)
 
     def is_data_exist(self):
         if os.path.isfile(self.file_dir):
@@ -51,9 +62,9 @@ class TextDataset(Dataset):
             print("Data {} does not exist".format(self.data_file))
             return False
 
-    def make_dataset(self):
+    def make_dataset(self, text):
         print("Start to make data")
-        tokenized_text = self.tokenize()
+        tokenized_text = self.tokenize(text)
         print("compelete tokenize")
         tokenized_text_flatten = reduce(operator.concat, tokenized_text)
         self.vocabs = list(set(tokenized_text_flatten))
@@ -80,22 +91,23 @@ class TextDataset(Dataset):
         else:
             saves = word_pairs, self.vocabs, word2idx, idx2word
         with open(self.file_dir, 'wb') as f:
-            # joblib.dump(saves, f)
             cPickle.dump(saves, f, protocol=2)
             print("Data saved in {}".format(self.data_file))
-
-    def tokenize(self):
-        text = re.sub("(january|febuary|march|april|may|june|july|august|september|october|november|december)", " ", self.text)
+    
+    def tokenize(self, text):
+        text = re.sub("(january|febuary|march|april|may|june|july|august|september|october|november|december)", " ", text)
         text = re.sub('<.*>'," ", text)
         text = re.sub('[^A-Za-z.]+', " ", text)
         text = text.split(".")
         tokens_list=[]
+        self.cnt = Counter()
         for sen in text:
             tokens=[]
             for word in sen.split():
                 if word not in self.stopwords:
                     tokens.append(word)
-            tokens_list.append(tokens) 
+                    self.cnt[word]+=1
+            tokens_list.append(tokens)
         return tokens_list
 
     def map_char_idx(self):
@@ -115,16 +127,21 @@ class TextDataset(Dataset):
             idx2word[n] = word
         return word2idx, idx2word
 
+    # @timefn
     def negative_sampling(self):
-        # self.calculate_distribution()
-        neg_sample = random.sample(self.vocabs, self.ns_size)
+        probs = self.calculate_distribution()
+        # neg_sample = np.random.choice(self.vocabs, self.ns_size, replace=True, p=probs)
+        neg_sample = random.choices(self.vocabs, weights=probs, k=self.ns_size)
         return neg_sample
 
-    # def calculate_distribution(self):
-    #     power = 3/4
-    #     for key, value in self.counter.items():
-    #         value**power
-    #     return
+    def calculate_distribution(self):
+        power = 3/4
+        probs =[]
+        for value in self.cnt.values():
+            probs.append(value**power)
+        probs = np.array(probs)
+        probs = probs/probs.sum()
+        return probs
 
     def _unicodeToAscii(self, s):
         return ''.join(
@@ -156,26 +173,19 @@ class TextDataset(Dataset):
     def __len__(self):
         return len(self.word_pairs)
 
-def trial(dataset):
+def trial(dataset, i):
+    dataset = 'wiki_{0:02d}.bz2'.format(i)
+    print("file", i,"pid=", os.getpid())
+    time.sleep(1)
     text_dataset = TextDataset('/disk2/wiki_dump/A/', dataset, 5, 5, True)
-
+    
 if __name__ == '__main__':
+    # t1 = time.time()
     # text_dataset = TextDataset('./data', 'toy/merge.txt', 5, 5, True)
+    # t2 = time.time()
+    # print(t2-t1)
     # index = 1
     # print(text_dataset.word_pairs[index])
-    processes=[]
-    # dataset_list = ['toy/merge.txt', 'toy/merge2.txt']
-    for i in range(100):
-        data = 'wiki_{0:02d}.bz2'.format(i)
-        p = mp.Process(target=trial, args=(data,))
-        p.start()
-        processes.append(p)
-    for p in processes:
-        p.join()
-    # processes = [mp.Process(target=trial, args=()) for x in range(4)]
-    # for p in processes:
-    #     p.start()
-    # for p in processes:
-    #     p.join()
-
+    p = Pool(4)
+    p.map(trial, range(0,100))
     

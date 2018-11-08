@@ -25,6 +25,10 @@ def train(args):
         model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
                             args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size)
     print("made model")
+    if args.load_model_code is not None:
+        model.load_state_dict(torch.load(args.log_dir + args.load_model_code + '/model_best.pt'))
+        args.timestamp = args.load_model_code[:12]
+        print('Model loaded')
     for epoch in range(args.epochs):
         dataset_order = 0
         total_dataset_num = 0
@@ -39,10 +43,6 @@ def train(args):
                                         args.is_character, args.num_worker)
                 print("made text loader")
                 model= model.to(device)
-                if args.load_model:
-                    model.load_state_dict(torch.load(args.log_dir + args.load_model_code + '/model_best.pt'))
-                    args.timestamp = args.load_model_code[:12]
-                    print('Model loaded')
                 writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)
                 optimizer = optim.Adam(model.parameters(), lr=args.lr)
                 for i, (center,context, neg) in enumerate(text_loader):

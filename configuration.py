@@ -34,7 +34,7 @@ def get_config():
     train_arg.add_argument('--log-frequency', default=1000, type=int)
     train_arg.add_argument('--timestamp', default=datetime.now().strftime("%y%m%d%H%M%S"), type=str)
     train_arg.add_argument('--load-model', default=None, type=str)
-    train_arg.add_argument('--load-model-code', type=str)
+    train_arg.add_argument('--load-model-code', default=None, type=str)
     train_arg.add_argument('--log-dir', default='saved/runs/', type=str)
     #for large dataset dataloader
     train_arg.add_argument('--num-worker', default=0, type=int)

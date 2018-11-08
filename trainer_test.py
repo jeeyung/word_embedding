@@ -15,25 +15,28 @@ import os
 def train(args):
     datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if args.is_character:
+        args.model_name = "cha-level"
+    if args.model_name == 'sgns':
+        # model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
+        model = skipgram(30000, args.embed_size)
+    else:
+        model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
+                            args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size)
+    print("made model")
     for epoch in range(args.epochs):
         dataset_order = 0
         total_dataset_num = 0
-        train_loss= 0
+        train_loss = 0
         monitor_loss = 0
         for dataset_dir in datasetlist_dir:
             for k in range(100):
                 start_time = time.time()
                 wiki_datadir = args.dataset + dataset_dir
-                dataset = os.path.join(wiki_datadir, 'wiki_{0:02d}.bz2'.format(k))
+                dataset = os.path.join(wiki_datadir, 'wiki_{0:02d}.bz2'.format(k+args.dataset_order))
                 text_loader = TextDataLoader(args.data_dir, dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                         args.is_character, args.num_worker)
-                if args.is_character:
-                    args.model_name = "cha-level"
-                if args.model_name == 'sgns':
-                    model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
-                else:
-                    model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
-                                        args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size)
+                print("made text loader")
                 model= model.to(device)
                 if args.load_model:
                     model.load_state_dict(torch.load(args.log_dir + args.load_model_code + '/model_best.pt'))
@@ -74,8 +77,9 @@ def train(args):
                 if train_loss > monitor_loss:
                     torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')
                     print("Model saved")
-                train_loss = monitor_loss
-                writer.add_scalar('Train loss', train_loss / total_dataset_num, dataset_order)
+                train_loss = monitor_loss/total_dataset_num
+                text_loader = 0
+                writer.add_scalar('Train loss', monitor_loss/total_dataset_num, dataset_order)
 
 if __name__ =='__main__':
     train(get_config())

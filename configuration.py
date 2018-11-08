@@ -24,10 +24,11 @@ def get_config():
     data_arg.add_argument('--window-size', default=5, type=int)
     data_arg.add_argument('--neg-sample-size', default=5, type=int)
     data_arg.add_argument('--is-character', action='store_true')
+    data_arg.add_argument('--dataset-order', default=0, type=int)
 
     train_arg = parser.add_argument_group('Train')
     train_arg.add_argument('--device', default=0, type=int)
-    train_arg.add_argument('--batch-size', default=32, type=int, help='mini-batch size (default: 32)')
+    train_arg.add_argument('--batch-size', default=64, type=int, help='mini-batch size (default: 64)')
     train_arg.add_argument('--epochs', default=10, type=int, help='number of total epochs (default: 10)')
     train_arg.add_argument('--lr', default=0.0002, type=float, help='learning rate (default: 0.0002)')
     train_arg.add_argument('--log-frequency', default=1000, type=int)

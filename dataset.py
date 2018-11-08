@@ -157,15 +157,16 @@ class TextDataset(Dataset):
         return len(self.word_pairs)
 
 def trial(dataset):
-    text_dataset = TextDataset('./data', dataset, 5, 5, True)
+    text_dataset = TextDataset('/disk2/wiki_dump/A/', dataset, 5, 5, True)
 
 if __name__ == '__main__':
     # text_dataset = TextDataset('./data', 'toy/merge.txt', 5, 5, True)
     # index = 1
     # print(text_dataset.word_pairs[index])
     processes=[]
-    dataset_list = ['toy/merge.txt', 'toy/merge2.txt']
-    for data in dataset_list:
+    # dataset_list = ['toy/merge.txt', 'toy/merge2.txt']
+    for i in range(100):
+        data = 'wiki_{0:02d}.bz2'.format(i)
         p = mp.Process(target=trial, args=(data,))
         p.start()
         processes.append(p)

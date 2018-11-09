@@ -95,6 +95,8 @@ class SimpleAnalogySolver(sklearn.base.BaseEstimator):
                     missing_words += 1
         if missing_words > 0:
             logger.warning("Missing {} words out of {}. Will replace them with mean vector".format(missing_words, total_words))
+        self.missing_words = missing_words
+        self.total_words = total_words
 
         # Batch due to memory constaints (in dot operation)
         for id_batch, batch in enumerate(batched(range(len(X)), self.batch_size)):

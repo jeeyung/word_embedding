@@ -137,7 +137,6 @@ def fetch_google_analogy():
     # url = "https://www.dropbox.com/s/eujtyfb5zem1mim/EN-GOOGLE.txt?dl=1"
     # with open(_fetch_file(url, "analogy/EN-GOOGLE", verbose=0), "r") as f:
     #     L = f.read().splitlines()
-    print(os.getcwd())
     L = pd.read_csv('evaluation/datasets/corpus/google.txt', header=None, sep="\n").values
 
     # Simple 4 word analogy questions with categories

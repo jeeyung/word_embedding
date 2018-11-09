@@ -9,6 +9,7 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.datasets.base import Bunch
+from preprocess import preprocess_word
 # from .utils import _get_as_pd, _fetch_file
 
 
@@ -38,6 +39,7 @@ def fetch_MTurk():
     data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/MTURK-771.csv'), header=None, sep=",").values
     # data = _get_as_pd('https://www.dropbox.com/s/f1v4ve495mmd9pw/EN-TRUK.txt?dl=1',
     #                   'similarity', header=None, sep=" ").values
+
     return Bunch(X=data[:, 0:2].astype("object"),
                  y=2 * data[:, 2].astype(np.float))
 
@@ -93,6 +95,10 @@ def fetch_MEN(which="all", form="natural"):
     elif form != "lem":
         raise RuntimeError("Not recognized form argument")
 
+    cols = data.columns[:2]
+    for col in cols:
+        data[col] = data[col].apply(preprocess_word)
+
     return Bunch(X=data.values[:, 0:2].astype("object"), y=data.values[:, 2:].astype(np.float) / 5.0)
 
 
@@ -146,6 +152,11 @@ def fetch_WS353(which="all"):
         raise RuntimeError("Not recognized which parameter")
 
     # We basically select all the columns available
+
+    cols = data.columns[:2]
+    for col in cols:
+        data[col] = data[col].apply(preprocess_word)
+
     X = data.values[:, 0:2]
     y = data.values[:, 2].astype(np.float)
 
@@ -214,6 +225,10 @@ def fetch_RW():
     data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/rare_words.tsv'), header=None, sep="\t").values
     # data = _get_as_pd('https://www.dropbox.com/s/xhimnr51kcla62k/EN-RW.txt?dl=1',
     #                   'similarity', header=None, sep="\t").values
+    cols = data.columns[:2]
+    for col in cols:
+        data[col] = data[col].apply(preprocess_word)
+
     return Bunch(X=data[:, 0:2].astype("object"),
                  y=data[:, 2].astype(np.float),
                  sd=np.std(data[:, 3:].astype(np.float)))
@@ -308,6 +323,9 @@ def fetch_SimLex999():
     data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/SimLex-999.txt'), header=0, sep="\t")
     # data = _get_as_pd('https://www.dropbox.com/s/0jpa1x8vpmk3ych/EN-SIM999.txt?dl=1',
     #                   'similarity', sep="\t")
+    cols = data.columns[:2]
+    for col in cols:
+        data[col] = data[col].apply(preprocess_word)
 
     # We basically select all the columns available
     X = data[['word1', 'word2']].values
@@ -343,6 +361,10 @@ def fetch_TR9856():
         'https://www.research.ibm.com/haifa/dept/vst/files/IBM_Debater_(R)_TR9856.v2.zip',
         'similarity', uncompress=True, verbose=0),
         'IBM_Debater_(R)_TR9856.v0.2', 'TermRelatednessResults.csv'), encoding="iso-8859-1")
+
+    cols = data.columns[:2]
+    for col in cols:
+        data[col] = data[col].apply(preprocess_word)
 
     # We basically select all the columns available
     X = data[['term1', 'term2']].values

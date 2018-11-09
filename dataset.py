@@ -173,7 +173,7 @@ class TextDataset(Dataset):
     def __len__(self):
         return len(self.word_pairs)
 
-def trial(dataset, i):
+def trial(i):
     dataset = 'wiki_{0:02d}.bz2'.format(i)
     print("file", i,"pid=", os.getpid())
     time.sleep(1)
@@ -188,4 +188,6 @@ if __name__ == '__main__':
     # print(text_dataset.word_pairs[index])
     p = Pool(4)
     p.map(trial, range(0,100))
+    p.close()
+    p.join()
     

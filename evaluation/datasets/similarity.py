@@ -222,13 +222,13 @@ def fetch_RW():
     frequencies above five, there are still many non-English words. To counter such problems,
     each word selected is required to have a non-zero number of synsets in WordNet(Miller, 1995).
     """
-    data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/rare_words.tsv'), header=None, sep="\t").values
+    data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/rare_words.tsv'), header=None, sep="\t")
     # data = _get_as_pd('https://www.dropbox.com/s/xhimnr51kcla62k/EN-RW.txt?dl=1',
     #                   'similarity', header=None, sep="\t").values
     cols = data.columns[:2]
     for col in cols:
         data[col] = data[col].apply(preprocess_word)
-
+    data = data.values
     return Bunch(X=data[:, 0:2].astype("object"),
                  y=data[:, 2].astype(np.float),
                  sd=np.std(data[:, 3:].astype(np.float)))

@@ -87,12 +87,14 @@ class SimpleAnalogySolver(sklearn.base.BaseEstimator):
         output = []
 
         missing_words = 0
+        total_words = 0
         for query in X:
             for query_word in query:
+                total_words += 1
                 if query_word not in word_id:
                     missing_words += 1
         if missing_words > 0:
-            logger.warning("Missing {} words. Will replace them with mean vector".format(missing_words))
+            logger.warning("Missing {} words out of {}. Will replace them with mean vector".format(missing_words, total_words))
 
         # Batch due to memory constaints (in dot operation)
         for id_batch, batch in enumerate(batched(range(len(X)), self.batch_size)):

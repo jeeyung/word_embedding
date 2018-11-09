@@ -12,7 +12,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=loggin
 
 # Fetch skip-gram trained on GoogleNews corpus and clean it slightly
 w = fetch_GloVe(corpus="wiki-6B", dim=50)
-
+print(w)
 # Fetch analogy dataset
 data = fetch_google_analogy()
 

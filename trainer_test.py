@@ -57,7 +57,7 @@ def train(args):
                 wiki_datadir = args.dataset + dataset_dir
                 dataset = os.path.join(wiki_datadir, 'wiki_{0:02d}.bz2'.format(k+args.dataset_order))
                 text_loader = TextDataLoader(args.data_dir, dataset, args.batch_size, args.window_size, args.neg_sample_size,
-                                        args.is_character, args.num_workers)
+                                        args.is_character, args.num_workers, args.remove_th, args.subsample_th)
                 print("made text loader")
                 model= model.to(device)
                 writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)

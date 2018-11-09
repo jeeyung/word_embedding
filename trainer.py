@@ -72,7 +72,7 @@ def train(args):
             monitor_loss += loss.item()
             if i % args.log_frequency == 0:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.8f}'.format(
-                    (epoch + 1), i* args.batch_size, len(text_loader.dataset),
+                    (epoch), i* args.batch_size, len(text_loader.dataset),
                     100. * i / len(text_loader),
                     loss/args.batch_size))
                 step = epoch * len(text_loader) // args.log_frequency + i // args.log_frequency

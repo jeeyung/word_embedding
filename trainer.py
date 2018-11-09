@@ -27,7 +27,7 @@ def result2dict(results):
         known_dict[name] = (total_words - missing_words) / total_words
     score_dict["Average"] = scores / len(results)
     known_dict["Average"] = (tot - miss) / tot
-    return score, known
+    return score_dict, known_dict
 
 
 def train(args):

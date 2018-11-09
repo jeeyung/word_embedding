@@ -15,6 +15,7 @@ import multiprocessing as mp
 from collections import Counter
 from functools import wraps
 import time
+import random
 # from sklearn.externals import joblib
 
 def timefn(fn):
@@ -27,7 +28,7 @@ def timefn(fn):
     return wrap
 
 class TextDataset(Dataset):
-    def __init__(self, data_dir, dataset, window_size, ns_size, is_character):
+    def __init__(self, data_dir, dataset, window_size, ns_size, remove_th, subsam_th, is_character):
         self.dataset_dir = os.path.join(data_dir, dataset)
         data_config_list = [dataset, window_size, ns_size, is_character]
         self.data_file = '_'.join(map(str, data_config_list)) + '.pkl'
@@ -35,7 +36,9 @@ class TextDataset(Dataset):
         self.window_size = window_size
         self.ns_size = ns_size
         self.is_character = is_character
-        self.stopwords = set(stopwords.words('english'))
+        self.rm_th = remove_th
+        self.subsam_th = subsam_th
+        # self.stopwords = set(stopwords.words('english'))
         if not self.is_data_exist():
             self.open_file()
 
@@ -100,15 +103,26 @@ class TextDataset(Dataset):
         text = re.sub('[^A-Za-z.]+', " ", text)
         text = text.split(".")
         tokens_list=[]
+        tokens_list_rm=[]
         self.cnt = Counter()
         for sen in text:
             tokens=[]
             for word in sen.split():
-                if word not in self.stopwords:
-                    tokens.append(word)
-                    self.cnt[word]+=1
+                # if word not in self.stopwords:
+                tokens.append(word)
+                self.cnt[word]+=1
             tokens_list.append(tokens)
-        return tokens_list
+        for tokens in tokens_list:
+            for t in tokens[::-1]:
+                if self.cnt[t] < self.rm_th:
+                    tokens[::-1].remove(t)
+                total_sum = sum(self.cnt.values())
+                p = 1-(self.subsam_th/(self.cnt[t]/total_sum))**0.5
+                if random.random() < p:
+                    if t in tokens:
+                        tokens[::-1].remove(t)
+            tokens_list_rm.append(tokens[::-1])
+        return tokens_list_rm
 
     def map_char_idx(self):
         alphabet = 'abcdefghijklmnopqrstuvwxyz'
@@ -177,17 +191,18 @@ def trial(i):
     dataset = 'wiki_{0:02d}.bz2'.format(i)
     print("file", i,"pid=", os.getpid())
     time.sleep(1)
-    text_dataset = TextDataset('/disk2/wiki_dump/A/', dataset, 5, 5, True)
+    # text_dataset = TextDataset('/disk2/wiki_dump/A/', dataset, 5, 5, True)
+    text_dataset = TextDataset('./data/extracted_wiki/A', dataset, 5, 5, 5, True)
     
 if __name__ == '__main__':
     # t1 = time.time()
-    # text_dataset = TextDataset('./data', 'toy/merge.txt', 5, 5, True)
+    text_dataset = TextDataset('./data', 'toy/merge.txt', 5, 5, 5, 1e-05, True)
     # t2 = time.time()
     # print(t2-t1)
     # index = 1
     # print(text_dataset.word_pairs[index])
-    p = Pool(4)
-    p.map(trial, range(0,100))
-    p.close()
-    p.join()
+    # p = Pool(4)
+    # p.map(trial, range(0,100))
+    # p.close()
+    # p.join()
     

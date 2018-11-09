@@ -37,7 +37,7 @@ def train(args):
         args.model_name = "cha-level"
     if args.model_name == 'sgns':
         # model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
-        model = skipgram(30000, args.embed_size)
+        model = skipgram(40000, args.embed_size)
     else:
         model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
                             args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size)
@@ -57,7 +57,7 @@ def train(args):
                 wiki_datadir = args.dataset + dataset_dir
                 dataset = os.path.join(wiki_datadir, 'wiki_{0:02d}.bz2'.format(k+args.dataset_order))
                 text_loader = TextDataLoader(args.data_dir, dataset, args.batch_size, args.window_size, args.neg_sample_size,
-                                        args.is_character, args.num_worker)
+                                        args.is_character, args.num_workers)
                 print("made text loader")
                 model= model.to(device)
                 writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)

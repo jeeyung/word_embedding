@@ -93,7 +93,7 @@ def train(args):
         ana_score, ana_known = result2dict(ana_results)
         writer.add_scalars('Similarity score', sim_score, epoch)
         writer.add_scalars('Similarity known', sim_known, epoch)
-        writer.add_scalars('Analogy score', ana_scorea, epoch)
+        writer.add_scalars('Analogy score', ana_score, epoch)
         writer.add_scalars('Analogy known', ana_known, epoch)
         writer.add_scalar('Epoch time', time.time() - start_time, epoch)
 

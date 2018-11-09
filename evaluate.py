@@ -11,7 +11,7 @@ from evaluation.evaluate import evaluate_similarity
 def evaluate(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size,
-                                 args.window_size, args.neg_sample_size, args.is_character)
+                                 args.window_size, args.neg_sample_size, args.is_character, args.num_worker)
 
     idx2word = text_loader.dataset.idx2word
     word2idx = text_loader.dataset.word2idx

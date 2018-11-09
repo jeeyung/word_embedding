@@ -195,9 +195,9 @@ def trial(i):
     #for jeeyung
     # text_dataset = TextDataset('./data/extracted_wiki/A', dataset, 5, 5, 5, 1e-05, True)
     #for dm_server
-    # text_dataset = TextDataset('/disk2/wiki_dump/A/', dataset, 5, 5, True)
+    # text_dataset = TextDataset('/disk2/wiki_dump/A/', dataset, 5, 5, 5, 1e-05, True)
     #for cluster_server
-    text_dataset = TextDataset('/data/jeeyung/wiki_dump/B/', dataset, 5, 5, True)
+    text_dataset = TextDataset('/data/jeeyung/wiki_dump/B/', dataset, 5, 7, 5, 1e-04, True)
 
 if __name__ == '__main__':
     # t1 = time.time()

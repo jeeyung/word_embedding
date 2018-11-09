@@ -22,11 +22,11 @@ def get_config():
     data_arg.add_argument('--data-dir', default='data', type=str, help='directory of training/testing data (default: datasets)')
     data_arg.add_argument('--dataset', default='toy/merge.txt', type=str)
     data_arg.add_argument('--window-size', default=5, type=int)
-    data_arg.add_argument('--neg-sample-size', default=10, type=int)
+    data_arg.add_argument('--neg-sample-size', default=7, type=int)
     data_arg.add_argument('--is-character', action='store_true')
     data_arg.add_argument('--dataset-order', default=0, type=int)
     data_arg.add_argument('--remove-th', default=5, type=int)
-    data_arg.add_argument('--subsample-th', default=1e-5, type=float)
+    data_arg.add_argument('--subsample-th', default=1e-4, type=float)
  
     train_arg = parser.add_argument_group('Train')
     train_arg.add_argument('--device', default=0, type=int)

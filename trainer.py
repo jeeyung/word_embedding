@@ -82,9 +82,12 @@ def train(args):
         (epoch),
         monitor_loss/ len(text_loader.dataset),
         time.time() - start_time))
+        if epoch % args.save_frequency ==0:
+            torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +f'model_{epoch+1}.pt')
+            print("Model saved")
         if train_loss > monitor_loss:
             torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')
-            print("Model saved")
+            print("Best model saved")
         train_loss = monitor_loss
         writer.add_scalar('Train loss', train_loss / len(text_loader.dataset), epoch)
         sim_results = evaluate(model.state_dict(), text_loader.dataset.word2idx, True)

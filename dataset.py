@@ -192,7 +192,7 @@ def trial(i):
     print("file", i,"pid=", os.getpid())
     time.sleep(1)
     # text_dataset = TextDataset('/disk2/wiki_dump/A/', dataset, 5, 5, True)
-    text_dataset = TextDataset('./data/extracted_wiki/A', dataset, 5, 5, 5, True)
+    text_dataset = TextDataset('./data/extracted_wiki/A', dataset, 5, 5, 5, 1e-05, True)
     
 if __name__ == '__main__':
     # t1 = time.time()

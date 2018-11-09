@@ -22,22 +22,25 @@ def get_config():
     data_arg.add_argument('--data-dir', default='data', type=str, help='directory of training/testing data (default: datasets)')
     data_arg.add_argument('--dataset', default='toy/merge.txt', type=str)
     data_arg.add_argument('--window-size', default=5, type=int)
-    data_arg.add_argument('--neg-sample-size', default=5, type=int)
+    data_arg.add_argument('--neg-sample-size', default=10, type=int)
     data_arg.add_argument('--is-character', action='store_true')
     data_arg.add_argument('--dataset-order', default=0, type=int)
-
+    data_arg.add_argument('--remove-th', default=5, type=int)
+    data_arg.add_argument('--subsample-th', default=1e-5, type=float)
+ 
     train_arg = parser.add_argument_group('Train')
     train_arg.add_argument('--device', default=0, type=int)
     train_arg.add_argument('--batch-size', default=64, type=int, help='mini-batch size (default: 64)')
     train_arg.add_argument('--epochs', default=10, type=int, help='number of total epochs (default: 10)')
     train_arg.add_argument('--lr', default=0.0025, type=float, help='learning rate (default: 0.0002)')
     train_arg.add_argument('--log-frequency', default=1000, type=int)
+    train_arg.add_argument('--save-frequency', default=2, type=int)
     train_arg.add_argument('--timestamp', default=datetime.now().strftime("%y%m%d%H%M%S"), type=str)
     train_arg.add_argument('--load-model', default=None, type=str)
     train_arg.add_argument('--load-model-code', default=None, type=str)
     train_arg.add_argument('--log-dir', default='saved/runs/', type=str)
     #for large dataset dataloader
-    train_arg.add_argument('--num-workers', default=1, type=int)
+    train_arg.add_argument('--num-workers', default=0, type=int)
     # test_arg = parser.add_argument_group('Test')
     # test_arg.add_argument('--load-model', action='store_true', default = False)
     

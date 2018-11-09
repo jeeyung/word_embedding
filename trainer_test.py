@@ -12,6 +12,23 @@ import time
 from dataloader import TextDataLoader
 import os
 import math 
+from evaluate import evaluate
+
+def result2dict(results):
+    score_dict = {}
+    known_dict = {}
+    scores = 0
+    miss = 0
+    tot = 0
+    for name, (score, missing_words, total_words) in results.items():
+        scores += score
+        miss += missing_words
+        tot += total_words
+        score_dict[name] = score
+        known_dict[name] = (total_words - missing_words) / total_words
+    score_dict["Average"] = scores / len(results)
+    known_dict["Average"] = (tot - miss) / tot
+    return score_dict, known_dict
 
 def train(args):
     datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
@@ -75,12 +92,25 @@ def train(args):
                 dataset_order,
                 monitor_loss/ total_dataset_num,
                 time.time() - start_time))
+                if k % args.save_frequency ==0:
+                    torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +f'model_{k}.pt')
+                    print("Model saved")
                 if train_loss > monitor_loss/total_dataset_num:
                     torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')
                     print("Model saved")
                 train_loss = monitor_loss/total_dataset_num
-                text_loader = 0
                 writer.add_scalar('Train loss', monitor_loss/total_dataset_num, dataset_order)
+                if args.model_name == "sgns":
+                    sim_results = evaluate(model.state_dict(), text_loader.dataset.word2idx, True)
+                    ana_results = evaluate(model.state_dict(), text_loader.dataset.word2idx, False)
+                    sim_score, sim_known = result2dict(sim_results)
+                    ana_score, ana_known = result2dict(ana_results)
+                    writer.add_scalars('Similarity score', sim_score, k)
+                    writer.add_scalars('Similarity known', sim_known, k)
+                    writer.add_scalars('Analogy score', ana_score, k)
+                    writer.add_scalars('Analogy known', ana_known, k)
+                writer.add_scalar('Epoch time', time.time() - start_time, k)
+                text_loader = 0
 
 if __name__ =='__main__':
     train(get_config())

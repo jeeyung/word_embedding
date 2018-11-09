@@ -1,7 +1,7 @@
 import sys
 sys.path.append("evaluation")
 import torch
-from configuration import get_config
+# from configuration import get_config
 from model import *
 from dataloader import TextDataLoader
 from evaluation.embedding import Embedding
@@ -9,16 +9,16 @@ from evaluation.datasets.similarity import fetch_MEN, fetch_MTurk, fetch_RW, fet
 from evaluation.datasets.analogy import fetch_google_analogy, fetch_msr_analogy
 from evaluation.evaluate import evaluate_similarity, evaluate_analogy
 
-def evaluate(args, is_similarity):
+def evaluate(params, word2idx, is_similarity):
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size,
-                                 args.window_size, args.neg_sample_size, args.is_character, args.num_worker)
-
-    idx2word = text_loader.dataset.idx2word
-    word2idx = text_loader.dataset.word2idx
-
-    params = torch.load(args.log_dir + 'model_best.pt', map_location=lambda storage, loc: storage)
-    print("Model loaded")
+    # text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size,
+    #                              args.window_size, args.neg_sample_size, args.is_character, args.num_worker)
+    #
+    # idx2word = text_loader.dataset.idx2word
+    # word2idx = text_loader.dataset.word2idx
+    #
+    # params = torch.load(args.log_dir + 'model_best.pt', map_location=lambda storage, loc: storage)
+    # print("Model loaded")
 
     embedding = params['center_embedding.weight']
     w = build_embedding_map(word2idx, embedding)
@@ -50,5 +50,5 @@ def build_embedding_map(word2idx, embedding_matrix):
     return embedding_map
 
 
-if __name__ == "__main__":
-    evaluate(get_config(), True)
+# if __name__ == "__main__":
+    # evaluate(get_config(), False)

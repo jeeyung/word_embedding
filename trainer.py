@@ -10,6 +10,7 @@ import torch.optim as optim
 from tensorboardX import SummaryWriter
 import time
 from dataloader import TextDataLoader
+from evaluate import evaluate
 
 def train(args):
     start_time = time.time()
@@ -68,6 +69,7 @@ def train(args):
             print("Model saved")
         train_loss = monitor_loss
         writer.add_scalar('Train loss', train_loss / len(text_loader.dataset), (epoch+1))
+        evaluate(model.state_dict(), text_loader.dataset.word2idx, True)
 
 if __name__ =='__main__':
     train(get_config())

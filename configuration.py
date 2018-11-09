@@ -37,7 +37,7 @@ def get_config():
     train_arg.add_argument('--load-model-code', default=None, type=str)
     train_arg.add_argument('--log-dir', default='saved/runs/', type=str)
     #for large dataset dataloader
-    train_arg.add_argument('--num-worker', default=0, type=int)
+    train_arg.add_argument('--num-workers', default=1, type=int)
     # test_arg = parser.add_argument_group('Test')
     # test_arg.add_argument('--load-model', action='store_true', default = False)
     

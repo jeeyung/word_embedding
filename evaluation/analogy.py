@@ -13,7 +13,7 @@ from itertools import product
 logger = logging.getLogger(__name__)
 import sklearn
 from datasets.analogy import *
-from utils import batched
+from evaluation.utils import batched
 from embedding import Embedding
 
 class SimpleAnalogySolver(sklearn.base.BaseEstimator):

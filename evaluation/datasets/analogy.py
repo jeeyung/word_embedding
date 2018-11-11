@@ -3,19 +3,17 @@
 """
  Functions for fetching analogy datasets
 """
-import sys
 # sys.path.append("evaluation")
-# sys.path.append("..")
 from collections import defaultdict
 import glob
 import os
+import sys
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
-
 from sklearn.datasets.base import Bunch
 # from utils import _get_dataset_dir, _fetch_file, _change_list_to_np
-from utils import standardize_string
+from evaluation.utils import standardize_string
 
 
 def fetch_wordrep(subsample=None, rng=None):

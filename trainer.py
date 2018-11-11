@@ -17,7 +17,7 @@ from utils import result2dict
 def train(args):
     device = args.device
     text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size, args.window_size, args.neg_sample_size,
-                                 args.is_character, args.num_workers)
+                                 args.is_character, args.num_workers, args.remove_th, args.subsample_th)
     if args.is_character:
         args.model_name = "cha-level"
     if args.model_name == 'sgns':

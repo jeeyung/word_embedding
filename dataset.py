@@ -39,16 +39,17 @@ class TextDataset(Dataset):
         self.rm_th = remove_th
         self.subsam_th = subsam_th
         # self.stopwords = set(stopwords.words('english'))
-        if not self.is_data_exist():
-            self.open_file()
+        self.stopwords = set()
+        # if not self.is_data_exist():
+        self.open_file()
 
         with open(self.file_dir, 'rb') as f:
             if is_character:
                 # self.word_pairs, self.vocabs, self.char2idx, self.idx2char = joblib.load(f)
-                self.word_pairs, self.vocabs, self.char2idx, self.idx2char = pkl.load(f)
+                self.word_pairs, self.neg_samples, self.vocabs, self.char2idx, self.idx2char = pkl.load(f)
             else:
                 # self.word_pairs, self.vocabs, self.word2idx, self.idx2word = joblib.load(f)
-                self.word_pairs, self.vocabs, self.word2idx, self.idx2word = pkl.load(f)
+                self.word_pairs, self.neg_samples, self.vocabs, self.word2idx, self.idx2word = pkl.load(f)
     
     def open_file(self):
         if self.dataset_dir.endswith(".bz2"):
@@ -65,12 +66,36 @@ class TextDataset(Dataset):
             print("Data {} does not exist".format(self.data_file))
             return False
 
+    def preprocess_counter(self, tokenized):
+        tokenized = reduce(operator.concat, tokenized)
+        cnt = Counter(tokenized)
+        #remove small words
+        small_words = [key for key, value in cnt.items() if value < self.rm_th]
+        for word in small_words:
+            cnt.pop(word, None)
+        #subsample
+        prob = 1 - (self.subsam_th / (np.array(list(cnt.values())) / sum(cnt.values())))**0.5
+        rm_idx = (np.random.random((len(prob),)) < prob)
+        rm_words = np.array(list(cnt.keys()))[rm_idx]
+        for word in rm_words:
+            cnt.pop(word, None)
+        # vocabs
+        self.vocabs = list(cnt.keys())
+        # calculate distribution
+        power = 3 / 4
+        probs = (np.array(list(cnt.values())) / sum(cnt.values()))**power
+        self.probs = probs / probs.sum()
+        self.stopwords = self.stopwords|set(small_words)|set(rm_words)
+        return cnt
+
     def make_dataset(self, text):
         print("Start to make data")
         tokenized_text = self.tokenize(text)
         print("compelete tokenize")
-        tokenized_text_flatten = reduce(operator.concat, tokenized_text)
-        self.vocabs = list(set(tokenized_text_flatten))
+        self.cnt = self.preprocess_counter(tokenized_text)
+        print("Start to make data again")
+        tokenized_text = self.tokenize(text)
+        print("compelete tokenize again")
         if self.is_character:
             self.char2idx, self.idx2char = self.map_char_idx()
         else:
@@ -81,18 +106,22 @@ class TextDataset(Dataset):
                 sentence = np.asarray(sentence)
                 for w in range(-self.window_size, self.window_size + 1):
                     context_word_idx = i + w
-                    if context_word_idx < 0 or context_word_idx >= len(sentence)\
-                        or context_word_idx == i:
+                    if context_word_idx < 0 or context_word_idx >= len(sentence) or context_word_idx == i:
                         continue
-                    neg_samples = self.negative_sampling()
+                    # neg_samples = self.negative_sampling()
                     if self.is_character:
-                        word_pairs.append(self.make_char((word, sentence[context_word_idx], neg_samples)))
+                        word_pairs.append(self.make_chars((word, sentence[context_word_idx])))
                     else:
-                        word_pairs.append((word2idx[word], word2idx[sentence[context_word_idx]], [word2idx[word] for word in neg_samples]))
+                        word_pairs.append((word2idx[word], word2idx[sentence[context_word_idx]]))
+        neg_samples = self.negative_sampling(len(word_pairs))
         if self.is_character:
-            saves = word_pairs, self.vocabs, self.char2idx, self.idx2char
+            neg_samples = [self.make_char(neg_sample) for neg_sample in neg_samples]
         else:
-            saves = word_pairs, self.vocabs, word2idx, idx2word
+            neg_samples = [[word2idx[word] for word in neg_sample] for neg_sample in neg_samples]
+        if self.is_character:
+            saves = word_pairs, neg_samples, self.vocabs, self.char2idx, self.idx2char
+        else:
+            saves = word_pairs, neg_samples, self.vocabs, word2idx, idx2word
         with open(self.file_dir, 'wb') as f:
             cPickle.dump(saves, f, protocol=2)
             print("Data saved in {}".format(self.data_file))
@@ -103,26 +132,13 @@ class TextDataset(Dataset):
         text = re.sub('[^A-Za-z.]+', " ", text)
         text = text.split(".")
         tokens_list=[]
-        tokens_list_rm=[]
-        self.cnt = Counter()
         for sen in text:
             tokens=[]
             for word in sen.split():
-                # if word not in self.stopwords:
-                tokens.append(word)
-                self.cnt[word]+=1
+                if word not in self.stopwords:
+                    tokens.append(word)
             tokens_list.append(tokens)
-        for tokens in tokens_list:
-            for t in tokens[::-1]:
-                if self.cnt[t] < self.rm_th:
-                    tokens[::-1].remove(t)
-                total_sum = sum(self.cnt.values())
-                p = 1-(self.subsam_th/(self.cnt[t]/total_sum))**0.5
-                if random.random() < p:
-                    if t in tokens:
-                        tokens[::-1].remove(t)
-            tokens_list_rm.append(tokens[::-1])
-        return tokens_list_rm
+        return tokens_list
 
     def map_char_idx(self):
         alphabet = 'abcdefghijklmnopqrstuvwxyz'
@@ -142,45 +158,41 @@ class TextDataset(Dataset):
         return word2idx, idx2word
 
     # @timefn
-    def negative_sampling(self):
-        probs = self.calculate_distribution()
+    def negative_sampling(self, batch):
         # neg_sample = np.random.choice(self.vocabs, self.ns_size, replace=True, p=probs)
-        neg_sample = random.choices(self.vocabs, weights=probs, k=self.ns_size)
+        neg_sample = np.random.choice(self.vocabs, size=self.ns_size * batch, replace=True, p=self.probs)
+        neg_sample = neg_sample.reshape(batch, self.ns_size)
         return neg_sample
-
-    def calculate_distribution(self):
-        power = 3/4
-        probs =[]
-        for value in self.cnt.values():
-            probs.append(value**power)
-        probs = np.array(probs)
-        probs = probs/probs.sum()
-        return probs
 
     def _unicodeToAscii(self, s):
         return ''.join(
             c for c in unicodedata.normalize('NFD', s)
             if unicodedata.category(c) != 'Mn')
 
-    def make_char(self, pairs):
+    def make_chars(self, pairs):
         center, context, neg_samples = pairs
         center_idx = [self.char2idx[char] for char in list(center)]
         context_idx = [self.char2idx[char] for char in list(context)]
+        return center_idx, context_idx
+
+    def make_char(self, neg):
         negs_idx = []
         for i in range(self.ns_size):
             negs_idx.append([self.char2idx[char] for char in list(neg_samples[i])])
-        return center_idx, context_idx, negs_idx
+        return negs_idx
 
     def __getitem__(self, idx):
         if self.is_character:
-            center_idx, context_idx, negs_idx = self.word_pairs[idx]
+            center_idx, context_idx = self.word_pairs[idx]
+            negs_idx = self.neg_samples[idx]
             center_idx, context_idx = torch.tensor(center_idx), torch.tensor(context_idx)
             negs_tensor_idx = []
             for i in range(self.ns_size):
                 negs_tensor_idx.append(torch.tensor(negs_idx[i]))
             return center_idx, context_idx, negs_tensor_idx
         else:
-            center_idx, context_idx, negs_idx = self.word_pairs[idx]
+            center_idx, context_idx = self.word_pairs[idx]
+            negs_idx = self.neg_samples[idx]
             center_idx, context_idx, negs_idx = torch.tensor(center_idx), torch.tensor(context_idx), torch.tensor(negs_idx)
             return center_idx, context_idx, negs_idx
 

@@ -25,8 +25,8 @@ def get_config():
     data_arg.add_argument('--neg-sample-size', default=7, type=int)
     data_arg.add_argument('--is-character', action='store_true')
     data_arg.add_argument('--dataset-order', default=0, type=int)
-    data_arg.add_argument('--remove-th', default=5, type=int)
-    data_arg.add_argument('--subsample-th', default=1e-4, type=float)
+    data_arg.add_argument('--remove-th', default=3, type=int)
+    data_arg.add_argument('--subsample-th', default=1e-3, type=float)
  
     train_arg = parser.add_argument_group('Train')
     train_arg.add_argument('--device', default=0, type=int)
@@ -40,7 +40,7 @@ def get_config():
     train_arg.add_argument('--load-model-code', default=None, type=str)
     train_arg.add_argument('--log-dir', default='saved/runs/', type=str)
     #for large dataset dataloader
-    train_arg.add_argument('--num-workers', default=0, type=int)
+    train_arg.add_argument('--num-workers', default=1, type=int)
     # test_arg = parser.add_argument_group('Test')
     # test_arg.add_argument('--load-model', action='store_true', default = False)
     

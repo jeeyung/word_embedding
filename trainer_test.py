@@ -14,27 +14,13 @@ import os
 import math 
 from evaluate import evaluate
 from torch.optim.lr_scheduler import StepLR
+from utils import result2dict
 
-def result2dict(results):
-    score_dict = {}
-    known_dict = {}
-    scores = 0
-    miss = 0
-    tot = 0
-    for name, (score, missing_words, total_words) in results.items():
-        scores += score
-        miss += missing_words
-        tot += total_words
-        score_dict[name] = score
-        known_dict[name] = (total_words - missing_words) / total_words
-    score_dict["Average"] = scores / len(results)
-    known_dict["Average"] = (tot - miss) / tot
-    return score_dict, known_dict
 
 
 def train(args):
     datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = args.device
     if args.is_character:
         args.model_name = "cha-level"
     if args.model_name == 'sgns':

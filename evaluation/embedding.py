@@ -14,12 +14,11 @@ from six import text_type
 from six import PY2
 from six import iteritems
 from six import string_types
-from utils import _open
 from vocabulary import Vocabulary, CountedVocabulary, OrderedVocabulary
 from six.moves import cPickle as pickle
 from six.moves import range
 from functools import partial
-from utils import standardize_string, to_utf8
+from evaluation.utils import standardize_string, to_utf8, _open
 
 from sklearn.metrics import pairwise_distances
 

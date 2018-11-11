@@ -13,6 +13,7 @@ from dataloader import TextDataLoader
 import os
 import math 
 from evaluate import evaluate
+from torch.optim.lr_scheduler import StepLR
 
 def result2dict(results):
     score_dict = {}
@@ -30,6 +31,7 @@ def result2dict(results):
     known_dict["Average"] = (tot - miss) / tot
     return score_dict, known_dict
 
+
 def train(args):
     datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -40,8 +42,11 @@ def train(args):
         model = skipgram(40000, args.embed_size)
     else:
         model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
-                            args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size)
+                            args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional)
+    model= model.to(device)
     print("made model")
+    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    scheduler = StepLR(optimizer, step_size=10, gamma=0.9)
     if args.load_model_code is not None:
         model.load_state_dict(torch.load(args.log_dir + args.load_model_code + '/model_best.pt'))
         args.timestamp = args.load_model_code[:12]
@@ -53,15 +58,14 @@ def train(args):
         monitor_loss = 0
         for dataset_dir in datasetlist_dir:
             for k in range(100):
+                scheduler.step()
                 start_time = time.time()
                 wiki_datadir = args.dataset + dataset_dir
                 dataset = os.path.join(wiki_datadir, 'wiki_{0:02d}.bz2'.format(k+args.dataset_order))
                 text_loader = TextDataLoader(args.data_dir, dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                         args.is_character, args.num_workers, args.remove_th, args.subsample_th)
                 print("made text loader")
-                model= model.to(device)
                 writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)
-                optimizer = optim.Adam(model.parameters(), lr=args.lr)
                 for i, (center,context, neg) in enumerate(text_loader):
                     if args.is_character:
                         center, center_len = center

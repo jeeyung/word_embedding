@@ -17,6 +17,7 @@ def get_config():
     model_arg.add_argument('--dropout', default=0.2, type= float)
     model_arg.add_argument('--num-layer', default=1, type=int)
     model_arg.add_argument('--mlp_size', default=128, type=int)
+    model_arg.add_argument('--bidirectional', action='store_true')
 
     data_arg = parser.add_argument_group('Data')
     data_arg.add_argument('--data-dir', default='data', type=str, help='directory of training/testing data (default: datasets)')
@@ -32,7 +33,7 @@ def get_config():
     train_arg.add_argument('--device', default=0, type=int)
     train_arg.add_argument('--batch-size', default=64, type=int, help='mini-batch size (default: 64)')
     train_arg.add_argument('--epochs', default=10, type=int, help='number of total epochs (default: 10)')
-    train_arg.add_argument('--lr', default=0.0025, type=float, help='learning rate (default: 0.0002)')
+    train_arg.add_argument('--lr', default=0.025, type=float, help='learning rate (default: 0.0002)')
     train_arg.add_argument('--log-frequency', default=1000, type=int)
     train_arg.add_argument('--save-frequency', default=2, type=int)
     train_arg.add_argument('--timestamp', default=datetime.now().strftime("%y%m%d%H%M%S"), type=str)
@@ -48,6 +49,6 @@ def get_config():
     args.device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     config_list = [args.model_name, args.embed_size, args.hidden_size,\
                    args.dataset, args.window_size, args.neg_sample_size, args.is_character,\
-                   args.device, args.batch_size, args.epochs, args.lr]
+                   args.device, args.batch_size, args.epochs, args.lr, args.bidirectional]
     args.config = '_'.join(list(map(str, config_list))).replace("/", ".")
     return args

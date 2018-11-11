@@ -10,11 +10,11 @@ import time
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class generator(nn.Module):
-    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout):
+    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional):
         super(generator, self).__init__()
         self.embedding = nn.Embedding(char_num, gen_embed_dim, padding_idx=0)
         self.lstm = nn.LSTM(gen_embed_dim, hidden_size, num_layers=num_layer,
-                    dropout=dropout, batch_first = True)
+                    dropout=dropout, batch_first = True, bidirectional=bidirectional)
                 
     def sorting(self, x, x_len):
         x_ordered = np.sort(x_len)[::-1]
@@ -56,10 +56,10 @@ class skipgram(nn.Module):
         return -self.pos_loss(center, context) + -self.neg_loss(center, ns)
 
 class word_embed_ng(nn.Module):
-    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, last_hidden, k):
+    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, last_hidden, k, bidirectional):
         super(word_embed_ng, self).__init__()
-        self.center_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout)
-        self.context_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout)
+        self.center_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional)
+        self.context_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional)
         self.mlp = nn.Linear(hidden_size, last_hidden)
         self.k = k
 

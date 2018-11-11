@@ -172,12 +172,12 @@ class TextDataset(Dataset):
             if unicodedata.category(c) != 'Mn')
 
     def make_chars(self, pairs):
-        center, context, neg_samples = pairs
+        center, context = pairs
         center_idx = [self.char2idx[char] for char in list(center)]
         context_idx = [self.char2idx[char] for char in list(context)]
         return center_idx, context_idx
 
-    def make_char(self, neg):
+    def make_char(self, neg_samples):
         negs_idx = []
         for i in range(self.ns_size):
             negs_idx.append([self.char2idx[char] for char in list(neg_samples[i])])
@@ -216,6 +216,7 @@ def trial(i):
 if __name__ == '__main__':
     t1 = time.time()
     text_dataset = TextDataset('./data/extracted_wiki/A', 'wiki_25.bz2', 5, 7, 5, 1e-04, True)
+    # text_dataset = TextDataset('./data', 'toy/merge.txt', 5, 7, 5, 1e-04, True)
     t2 = time.time()
     print(t2-t1)
     # index = 1

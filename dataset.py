@@ -207,22 +207,22 @@ def trial(i):
     time.sleep(1)
 
     #for jeeyung
-    text_dataset = TextDataset('./data/extracted_wiki/A', dataset, 5, 7, 5, 1e-04, True)
+    # text_dataset = TextDataset('./data/extracted_wiki/A', dataset, 5, 7, 5, 1e-04, True)
     #for cluster_server
     # text_dataset = TextDataset('/disk2/wiki_dump/A/', dataset, 5, 7, 5, 1e-04, True)
     #for dm_server
-    # text_dataset = TextDataset('/data/jeeyung/wiki_dump/B/', dataset, 5, 7, 5, 1e-04, True)
+    text_dataset = TextDataset('/data/jeeyung/wiki_dump/B/', dataset, 5, 7, 5, 1e-04, True)
 
 if __name__ == '__main__':
-    t1 = time.time()
-    text_dataset = TextDataset('./data/extracted_wiki/A', 'wiki_25.bz2', 5, 7, 5, 1e-04, True)
-    # text_dataset = TextDataset('./data', 'toy/merge.txt', 5, 7, 5, 1e-04, True)
-    t2 = time.time()
-    print(t2-t1)
+    # t1 = time.time()
+    # text_dataset = TextDataset('./data/extracted_wiki/A', 'wiki_25.bz2', 5, 7, 5, 1e-04, True)
+    # # text_dataset = TextDataset('./data', 'toy/merge.txt', 5, 7, 5, 1e-04, True)
+    # t2 = time.time()
+    # print(t2-t1)
     # index = 1
     # print(text_dataset.word_pairs[index])
-    # p = Pool(10)
-    # p.map(trial, range(0,100))
-    # p.close()
-    # p.join()
+    p = Pool(10)
+    p.map(trial, range(0,100))
+    p.close()
+    p.join()
     

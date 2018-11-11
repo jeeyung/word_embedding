@@ -40,8 +40,8 @@ class TextDataset(Dataset):
         self.subsam_th = subsam_th
         # self.stopwords = set(stopwords.words('english'))
         self.stopwords = set()
-        # if not self.is_data_exist():
-        self.open_file()
+        if not self.is_data_exist():
+            self.open_file()
 
         with open(self.file_dir, 'rb') as f:
             if is_character:

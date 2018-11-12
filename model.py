@@ -85,7 +85,7 @@ if __name__=='__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = word_embed_ng(26, 10, 10, 1, 0.3, 10, 5, False, False)
-    model = model.to(device)
+    # model = model.to(device)
     
     # text_loader = TextDataLoader('./data', batch_size = 2, window_size = 5, k=5)
     text_loader = TextDataLoader('./data', 'toy/merge.txt', 8, 5, 5, True, 0, 5, 1e-04)
@@ -95,6 +95,10 @@ if __name__=='__main__':
         context, context_len = context
         center = center.to(device)
         context = context.to(device)
+        if torch.cuda.device_count() > 1:
+            print("using", torch.cuda.device_count(), "GPUs")
+            model = nn.DataParallel(model)
+        model = model.to(device)
         output = model(center, center_len, context, context_len, neg)
         print(output)
         break

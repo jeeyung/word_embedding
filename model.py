@@ -30,7 +30,6 @@ class generator(nn.Module):
     def forward(self, x, x_len):
         x, unsort_idx, x_ordered = self.sorting(x, x_len)
         embedded = self.embedding(x)
-        print(x_ordered.type())
         embedded = pack_padded_sequence(embedded, x_ordered, batch_first = True)
         _, (h,c) = self.lstm(embedded)
         ordered_output = h[-1].index_select(0, unsort_idx)
@@ -74,19 +73,19 @@ class word_embed_ng(nn.Module):
 
     def forward(self, x, x_len, y, y_len, neg):
         prediction = self.mlp(self.center_generator(x, x_len))
-        # target = self.mlp(self.context_generator(y, y_len))
-        # neg_output =[]
-        # for i in range(self.k):
-        #     neg_output.append(self.mlp(self.context_generator(neg[i][0], neg[i][1])))
-        # neg_output_tensor = torch.stack(neg_output)
-        # loss = self.cal_loss(prediction, target, neg_output_tensor)
-        # return loss
+        target = self.mlp(self.context_generator(y, y_len))
+        neg_output =[]
+        for i in range(self.k):
+            neg_output.append(self.mlp(self.context_generator(neg[i][0], neg[i][1])))
+        neg_output_tensor = torch.stack(neg_output)
+        loss = self.cal_loss(prediction, target, neg_output_tensor)
+        return loss
 
 if __name__=='__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = word_embed_ng(26, 10, 10, 1, 0.3, 10, 5, False, False)
-    model = model.to(device)
+    # model = model.to(device)
     
     # text_loader = TextDataLoader('./data', batch_size = 2, window_size = 5, k=5)
     text_loader = TextDataLoader('./data', 'toy/merge.txt', 8, 5, 5, True, 0, 5, 1e-04)
@@ -96,6 +95,10 @@ if __name__=='__main__':
         context, context_len = context
         center = center.to(device)
         context = context.to(device)
+        if torch.cuda.device_count() > 1:
+            print("using", torch.cuda.device_count(), "GPUs")
+            model = nn.DataParallel(model)
+        model = model.to(device)
         output = model(center, center_len, context, context_len, neg)
         print(output)
         break

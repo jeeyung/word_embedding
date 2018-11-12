@@ -94,5 +94,5 @@ if __name__ =='__main__':
         p.start()
         processes.append(p)
     for p in processes:
-        p.join
+        p.join()
     train(get_config())

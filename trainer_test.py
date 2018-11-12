@@ -59,8 +59,11 @@ def train(args):
                         context, context_len = context
                         center = center.to(device)
                         context = context.to(device)
+                        for k in range(args.neg_sample_size):
+                            padded_neg, neg_len = neg[k]
+                            n.append((padded_neg.to(device), neg_len))
                         optimizer.zero_grad()
-                        loss = model(center, center_len, context, context_len, neg)
+                        loss = model(center, center_len, context, context_len, n)
                     else:
                         center = center.to(device)
                         context = context.to(device)

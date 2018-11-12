@@ -7,7 +7,7 @@ from evaluation.datasets.similarity import fetch_MEN, fetch_MTurk, fetch_RW, fet
 from evaluation.datasets.analogy import fetch_google_analogy, fetch_msr_analogy
 from evaluation.evaluate import evaluate_similarity, evaluate_analogy
 
-def character_embedding(data_dir='./data', model, batch_size=128)
+def character_embedding(model, data_dir='./data', batch_size=128):
     test_loader = TestDataset(data_dir, batch_size)
     embeddings = []
     for words, length in zip(test_loader,test_loader):

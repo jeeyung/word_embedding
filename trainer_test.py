@@ -16,8 +16,6 @@ from evaluate import evaluate
 from torch.optim.lr_scheduler import StepLR
 from utils import result2dict
 
-
-
 def train(args):
     datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
     device = args.device
@@ -28,10 +26,10 @@ def train(args):
         model = skipgram(50000, args.embed_size)
     else:
         model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
-                            args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional, args.multigpu)
-    if torch.cuda.device_count() > 1 and args.multigpu:
-        print("using", torch.cuda.device_count(), "GPUs")
-        model = nn.DataParallel(model)
+                            args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional, args.multigpu, args.device)
+    # if torch.cuda.device_count() > 1 and args.multi:
+    #     print("using", torch.cuda.device_count(), "GPUs")
+    #     model = nn.DataParallel(model)
     model= model.to(device)
     print("made model")
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
@@ -102,6 +100,17 @@ def train(args):
                     writer.add_scalars('Similarity known', sim_known, k)
                     writer.add_scalars('Analogy score', ana_score, k)
                     writer.add_scalars('Analogy known', ana_known, k)
+                    sim_results = evaluate(model, True, text_loader.dataset.word2idx)
+                    ana_results = evaluate(model, False, text_loader.dataset.word2idx)
+                else:
+                    sim_results = evaluate(model, True)
+                    ana_results = evaluate(model, False)
+                sim_score, sim_known = result2dict(sim_results)
+                ana_score, ana_known = result2dict(ana_results)
+                writer.add_scalars('Similarity score', sim_score, k)
+                writer.add_scalars('Similarity known', sim_known, k)
+                writer.add_scalars('Analogy score', ana_score, k)
+                writer.add_scalars('Analogy known', ana_known, k)
                 writer.add_scalar('Epoch time', time.time() - start_time, k)
                 del text_loader
 

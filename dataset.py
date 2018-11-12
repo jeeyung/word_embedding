@@ -3,6 +3,8 @@ import numpy as np
 import pickle as pkl
 import torch
 from torch.utils.data import Dataset, ConcatDataset
+from evaluation.datasets.similarity import fetch_MEN, fetch_MTurk, fetch_RW, fetch_SimLex999, fetch_WS353
+from evaluation.datasets.analogy import fetch_google_analogy, fetch_msr_analogy
 import re
 import random
 import operator
@@ -200,6 +202,78 @@ class TextDataset(Dataset):
 
     def __len__(self):
         return len(self.word_pairs)
+
+class TestDataset(Dataset):
+    def __init__(self, data_dir):
+        self.file_dir = os.path.join(data_dir, "test_sets.pkl")
+        self.char2idx, self.idx2char = self.map_char_idx()
+        if not self.is_data_exist():
+            self.make_dataset()
+        self.load_data()
+
+    def map_char_idx(self):
+        alphabet = 'abcdefghijklmnopqrstuvwxyz'
+        char2idx = {}
+        idx2char = {}
+        for i in range(len(alphabet)):
+            char2idx[list(alphabet)[i]] = i+1
+            idx2char[i+1] = list(alphabet)[i]
+        return char2idx, idx2char
+
+    def is_data_exist(self):
+        if os.path.isfile(self.file_dir):
+            print("Data {} exist".format(self.file_dir))
+            return True
+        else:
+            print("Data {} does not exist".format(self.file_dir))
+            return False
+
+    def make_char(self, word):
+        word_idx = [self.char2idx[char] for char in list(word)]
+        return word_idx
+
+    def preprocess(self, word):
+        word = re.sub(r"[^A-Za-z]+", '', word).lower()
+        return word
+
+    def make_dataset(self):
+        print("Start to make data.")
+        tasks = {
+            "MTurk": fetch_MTurk(),
+            "MEN": fetch_MEN(),
+            "WS353": fetch_WS353(),
+            "RW": fetch_RW(),
+            "SIMLEX999": fetch_SimLex999(),
+            "Google": fetch_google_analogy(),
+            "MSR": fetch_msr_analogy()
+        }
+        test_words = []
+        for name, data in tasks.items():
+            test_words.extend(data.X.flatten())
+        test_words = list(set(test_words))
+        words_idx = []
+        for word in test_words:
+            word = self.preprocess(word)
+            if len(word) > 0:
+                words_idx.append(self.make_char(word))
+        saves = words_idx, test_words, self.char2idx, self.idx2char
+        with open(self.file_dir, 'wb') as f:
+            cPickle.dump(saves, f, protocol=2)
+            print("Data saved in {}".format(self.file_dir))
+
+    def load_data(self):
+        print("Loaded data from {}".format(self.file_dir))
+        with open(self.file_dir, 'rb') as f:
+            self.words, self.test_words, self.char2idx, self.idx2char = pkl.load(f)
+
+    def __len__(self):
+        return len(self.words)
+
+    def __getitem__(self, idx):
+        word_idx = torch.tensor(self.words[idx])
+        return word_idx
+
+
 
 def trial(i):
     dataset = 'wiki_{0:02d}.bz2'.format(i)

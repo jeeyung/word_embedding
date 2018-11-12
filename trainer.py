@@ -12,7 +12,7 @@ import time
 from dataloader import TextDataLoader
 from evaluate import evaluate
 from utils import result2dict
-
+import torch.multiprocessing as mp
 
 def train(args):
     device = args.device
@@ -85,4 +85,14 @@ def train(args):
         writer.add_scalar('Epoch time', time.time() - start_time, epoch)
 
 if __name__ =='__main__':
+    num_processes = 4
+    model = My
+    model.share_memory()
+    processes =[]
+    for rank in range(num_processes):
+        p = mp.Process(target=train, args=(model,))
+        p.start()
+        processes.append(p)
+    for p in processes:
+        p.join
     train(get_config())

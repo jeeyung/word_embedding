@@ -28,8 +28,8 @@ def train(args):
         model = skipgram(40000, args.embed_size)
     else:
         model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
-                            args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional)
-    if torch.cuda.device_count() > 1 and args.multi_gpu:
+                            args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional, args.multigpu)
+    if torch.cuda.device_count() > 1 and args.multi:
         print("using", torch.cuda.device_count(), "GPUs")
         model = nn.DataParallel(model)
     model= model.to(device)
@@ -103,7 +103,7 @@ def train(args):
                     writer.add_scalars('Analogy score', ana_score, k)
                     writer.add_scalars('Analogy known', ana_known, k)
                 writer.add_scalar('Epoch time', time.time() - start_time, k)
-                text_loader = 0
+                del text_loader
 
 if __name__ =='__main__':
     train(get_config())

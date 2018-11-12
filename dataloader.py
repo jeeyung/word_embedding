@@ -1,9 +1,9 @@
 import sys, os
 import numpy as np
 import torch
-from torch.nn.utils.rnn import pack_sequence
+from torch.nn.utils.rnn import pack_sequence, pad_sequence
 from torch.utils.data import DataLoader
-from dataset import TextDataset
+from dataset import TextDataset, TestDataset
 
 device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 def collate_text(list_inputs):
@@ -29,6 +29,12 @@ def collate_text(list_inputs):
         neg.append((padded_neg, neg_len))
     return (padded_center, center_list), (padded_context, context_list), neg
 
+def collate_word(words):
+    words.sort(key=lambda x: len(x), reverse=True)
+    length_list = [len(words[i]) for i in range(len(words))]
+    padded_words = pad_sequence(words)
+    return padded_words, length_list
+
 class TextDataLoader(DataLoader):
     def __init__(self, data_dir, dataset, batch_size, window_size, ns_size, is_character, num_workers, remove_th, subsample_th):
         self.dataset = TextDataset(data_dir, dataset, window_size, ns_size, remove_th, subsample_th, is_character)
@@ -37,22 +43,30 @@ class TextDataLoader(DataLoader):
         else:
             super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers)
 
+class TestDataLoader(DataLoader):
+    def __init__(self, data_dir, batch_size, num_workers):
+        self.dataset = TestDataset(data_dir)
+        super(TestDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers, collate_fn=collate_word)
+
 if __name__ == '__main__':
-    is_character = False
-    text_loader = TextDataLoader('./data', 'toy/merge.txt', 10, 5, 5, is_character)
-    if is_character:
-        for i, (padded_center, center_list, padded_context, context_list, neg) in enumerate(text_loader):
-            print(padded_center)
-            print(center_list)
-            print(padded_context)
-            print(context_list)
-            print(neg)
-            if i > 10:
-                break
-    else:
-        for i, (center_word, context_word, ns_words) in enumerate(text_loader):
-            print(center_word)
-            print(context_word)
-            print(ns_words)
-            if i > 10:
-                break
+    # is_character = False
+    # text_loader = TextDataLoader('./data', 'toy/merge.txt', 10, 5, 5, is_character)
+    # if is_character:
+    #     for i, (padded_center, center_list, padded_context, context_list, neg) in enumerate(text_loader):
+    #         print(padded_center)
+    #         print(center_list)
+    #         print(padded_context)
+    #         print(context_list)
+    #         print(neg)
+    #         if i > 10:
+    #             break
+    # else:
+    #     for i, (center_word, context_word, ns_words) in enumerate(text_loader):
+    #         print(center_word)
+    #         print(context_word)
+    #         print(ns_words)
+    #         if i > 10:
+    #             break
+    test_loader = TestDataLoader('./data', 12, 1)
+    for data in test_loader:
+        print(data)

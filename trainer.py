@@ -98,7 +98,7 @@ if __name__ =='__main__':
     model.share_memory()
     processes =[]
     for rank in range(num_processes):
-        p = mp.Process(target=train, args=(model, trainloader_id))
+        p = mp.Process(target=train, args=(model, dataset_dir, ))
         p.start()
         processes.append(p)
     for p in processes:

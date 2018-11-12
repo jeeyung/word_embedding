@@ -17,6 +17,7 @@ from torch.optim.lr_scheduler import StepLR
 from utils import result2dict
 
 def train(args):
+    
     datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
     device = args.device
     if args.is_character:

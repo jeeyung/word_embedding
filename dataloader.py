@@ -5,8 +5,7 @@ from torch.nn.utils.rnn import pack_sequence
 from torch.utils.data import DataLoader
 from dataset import TextDataset
 
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 def collate_text(list_inputs):
     batch = len(list_inputs)
     center_list = [len(list_inputs[i][0]) for i in range(batch)]
@@ -23,7 +22,8 @@ def collate_text(list_inputs):
     for k in range(neg_size):
         neg_len = [len(list_inputs[i][2][k]) for i in range(batch)]
         max_len_neg = max(neg_len)
-        padded_neg = torch.zeros(batch, max_len_neg, dtype=torch.long, device=device)
+        # padded_neg = torch.zeros(batch, max_len_neg, dtype=torch.long, device = device)
+        padded_neg = torch.zeros(batch, max_len_neg, dtype=torch.long)
         for i in range(batch):
             padded_neg[i,:neg_len[i]] = list_inputs[i][2][k]
         neg.append((padded_neg, neg_len))

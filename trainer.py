@@ -24,7 +24,7 @@ def train(args):
         model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
     else:
         model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
-                            args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size)
+                            args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional)
     model= model.to(device)
     if args.load_model:
         model.load_state_dict(torch.load(args.log_dir + args.load_model_code + '/model_best.pt'))
@@ -85,12 +85,20 @@ def train(args):
         writer.add_scalar('Epoch time', time.time() - start_time, epoch)
 
 if __name__ =='__main__':
+    args = get_config()
+    datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
+    for dataset_dir in datasetlist_dir:
+        for k in range(100):
+            wiki_datadir = args.dataset + dataset_dir
+            dataset = os.path.join(wiki_datadir, 'wiki_{0:02d}.bz2'.format(k+args.dataset_order))
+            text_loader = TextDataLoader(args.data_dir, dataset, args.batch_size, args.window_size, args.neg_sample_size,
+                                    args.is_character, args.num_workers, args.remove_th, args.subsample_th)
     num_processes = 4
     model = My
     model.share_memory()
     processes =[]
     for rank in range(num_processes):
-        p = mp.Process(target=train, args=(model,))
+        p = mp.Process(target=train, args=(model, trainloader_id))
         p.start()
         processes.append(p)
     for p in processes:

@@ -40,6 +40,7 @@ class generator(nn.Module):
         x, unsort_idx, x_ordered = self.sorting(x, x_len)
         embedded = self.embedding(x)
         embedded = pack_padded_sequence(embedded, x_ordered, batch_first = True)
+        print(embedded.shape)
         _, (h,_) = self.lstm(embedded)
         ordered_output = h[-1].index_select(0, unsort_idx)
         return ordered_output
@@ -92,7 +93,7 @@ class word_embed_ng(nn.Module):
 
 if __name__=='__main__':
 
-    device = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = word_embed_ng(26, 10, 10, 1, 0.3, 10, 5, False, True, device)
     # model = model.to(device)
     

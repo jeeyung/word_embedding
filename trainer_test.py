@@ -19,13 +19,13 @@ from utils import result2dict
 
 
 def train(args):
-    datasetlist_dir = ["B","C","D","E","F","G","H","I","J","K","L"] 
+    datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
     device = args.device
     if args.is_character:
         args.model_name = "cha-level"
     if args.model_name == 'sgns':
         # model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
-        model = skipgram(40000, args.embed_size)
+        model = skipgram(50000, args.embed_size)
     else:
         model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
                             args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional, args.multigpu)

@@ -17,7 +17,6 @@ from torch.optim.lr_scheduler import StepLR
 from utils import result2dict
 
 
-
 def train(args):
     datasetlist_dir = ["B","C","D","E","F","G","H","I","J","K","L"] 
     device = args.device
@@ -94,14 +93,17 @@ def train(args):
                 train_loss = monitor_loss/total_dataset_num
                 writer.add_scalar('Train loss', monitor_loss/total_dataset_num, dataset_order)
                 if args.model_name == "sgns":
-                    sim_results = evaluate(model.state_dict(), text_loader.dataset.word2idx, True)
-                    ana_results = evaluate(model.state_dict(), text_loader.dataset.word2idx, False)
-                    sim_score, sim_known = result2dict(sim_results)
-                    ana_score, ana_known = result2dict(ana_results)
-                    writer.add_scalars('Similarity score', sim_score, k)
-                    writer.add_scalars('Similarity known', sim_known, k)
-                    writer.add_scalars('Analogy score', ana_score, k)
-                    writer.add_scalars('Analogy known', ana_known, k)
+                    sim_results = evaluate(model, True, text_loader.dataset.word2idx)
+                    ana_results = evaluate(model, False, text_loader.dataset.word2idx)
+                else:
+                    sim_results = evaluate(model, True)
+                    ana_results = evaluate(model, False)
+                sim_score, sim_known = result2dict(sim_results)
+                ana_score, ana_known = result2dict(ana_results)
+                writer.add_scalars('Similarity score', sim_score, k)
+                writer.add_scalars('Similarity known', sim_known, k)
+                writer.add_scalars('Analogy score', ana_score, k)
+                writer.add_scalars('Analogy known', ana_known, k)
                 writer.add_scalar('Epoch time', time.time() - start_time, k)
                 del text_loader
 

@@ -2,14 +2,30 @@ import sys
 sys.path.append("evaluation")
 import torch
 from configuration import get_config
+from dataloader import TestDataset
 from evaluation.datasets.similarity import fetch_MEN, fetch_MTurk, fetch_RW, fetch_SimLex999, fetch_WS353
 from evaluation.datasets.analogy import fetch_google_analogy, fetch_msr_analogy
 from evaluation.evaluate import evaluate_similarity, evaluate_analogy
 
-def evaluate(params, word2idx, is_similarity):
+def character_embedding(data_dir='./data', model, batch_size=128)
+    test_loader = TestDataset(data_dir, batch_size)
+    embeddings = []
+    for words, length in zip(test_loader,test_loader):
+        embedding = model.mlp(model.center_generator(words, length))
+        embeddings.append(embedding)
+    embeddings = torch.cat(embeddings, 0)
+    embedding_map = {}
+    for word, embedding in zip(test_loader.dataset.test_words, embeddings):
+        embedding_map[word] = embedding
+    return embedding_map
+
+def evaluate(model, is_similarity, word2idx=None):
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    embedding = params['center_embedding.weight']
-    w = build_embedding_map(word2idx, embedding)
+    if isinstance(model, skipgram):
+        embedding = model.state_dict()['center_embedding.weight']
+        w = build_embedding_map(word2idx, embedding)
+    else:
+        w = character_embedding(model=model)
     if is_similarity:
         tasks = {
             "MTurk": fetch_MTurk(),

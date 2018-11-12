@@ -19,7 +19,7 @@ from utils import result2dict
 
 
 def train(args):
-    datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
+    datasetlist_dir = ["B","C","D","E","F","G","H","I","J","K","L"] 
     device = args.device
     if args.is_character:
         args.model_name = "cha-level"
@@ -29,7 +29,7 @@ def train(args):
     else:
         model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
                             args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional, args.multigpu)
-    if torch.cuda.device_count() > 1 and args.multi:
+    if torch.cuda.device_count() > 1 and args.multigpu:
         print("using", torch.cuda.device_count(), "GPUs")
         model = nn.DataParallel(model)
     model= model.to(device)

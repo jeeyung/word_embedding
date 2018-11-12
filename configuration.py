@@ -41,7 +41,7 @@ def get_config():
     train_arg.add_argument('--load-model', default=None, type=str)
     train_arg.add_argument('--load-model-code', default=None, type=str)
     train_arg.add_argument('--log-dir', default='saved/runs/', type=str)
-    train_arg.add_argument('--multi-gpu', action='store_true')
+    train_arg.add_argument('--multigpu', action='store_true')
     #for large dataset dataloader
     train_arg.add_argument('--num-workers', default=0, type=int)
     # test_arg = parser.add_argument_group('Test')

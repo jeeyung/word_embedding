@@ -29,6 +29,9 @@ def train(args):
     else:
         model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
                             args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional)
+    if torch.cuda.device_count() > 1 and args.multi_gpu:
+        print("using", torch.cuda.device_count(), "GPUs")
+        model = nn.DataParallel(model)
     model= model.to(device)
     print("made model")
     optimizer = optim.Adam(model.parameters(), lr=args.lr)

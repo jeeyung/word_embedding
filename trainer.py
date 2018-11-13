@@ -49,6 +49,7 @@ def train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, 
             else:
                 step = i // args.log_frequency + epoch * len(text_loader) // args.log_frequency
             writer.add_scalar('Batch loss', loss / args.batch_size, step)
+    if args.evaluation:
         evaluation(args, writer, model, text_loader)
     return monitor_loss
 

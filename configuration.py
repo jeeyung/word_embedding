@@ -20,9 +20,10 @@ def get_config():
     model_arg.add_argument('--bidirectional', action='store_true')
 
     data_arg = parser.add_argument_group('Data')
-    data_arg.add_argument('--data-dir', default='data', type=str, help='directory of training/testing data (default: datasets)')
-    data_arg.add_argument('--dataset', default='toy/merge.txt', type=str)
-    # data_arg.add_argument('--dataset', default='wiki_dump/', type=str)
+    # data_arg.add_argument('--data-dir', default='data', type=str, help='directory of training/testing data (default: datasets)')
+    data_arg.add_argument('--data-dir', default='/data/jeeyung', type=str, help='directory of training/testing data (default: datasets)')
+    # data_arg.add_argument('--dataset', default='toy/merge.txt', type=str)
+    data_arg.add_argument('--dataset', default='wiki_dump/', type=str)
     data_arg.add_argument('--window-size', default=5, type=int)
     data_arg.add_argument('--neg-sample-size', default=7, type=int)
     data_arg.add_argument('--is-character', action='store_true')

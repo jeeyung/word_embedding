@@ -218,9 +218,9 @@ def evaluate_analogy(w, X, y, method="add", k=None, category=None, batch_size=10
         return pd.concat([pd.Series(results, name="accuracy"),
                           pd.Series(correct, name="correct"),
                           pd.Series(count, name="count")],
-                         axis=1)
+                         axis=1), solver.missing_words, solver.total_words
     else:
-        return np.mean(y_pred == y)
+        return np.mean(y_pred == y), solver.missing_words, solver.total_words
 
 
 def evaluate_on_WordRep(w, max_pairs=1000, solver_kwargs={}):
@@ -324,19 +324,21 @@ def evaluate_similarity(w, X, y):
 
     missing_words = 0
     words = w.vocabulary.word_id
+    total_words = 0
     for query in X:
         for query_word in query:
+            total_words += 1
             if query_word not in words:
                 missing_words += 1
     if missing_words > 0:
-        logger.warning("Missing {} words. Will replace them with mean vector".format(missing_words))
+        logger.warning("Missing {} words out of {}. Will replace them with mean vector".format(missing_words, total_words))
 
 
     mean_vector = np.mean(w.vectors, axis=0, keepdims=True)
     A = np.vstack(w.get(word, mean_vector) for word in X[:, 0])
     B = np.vstack(w.get(word, mean_vector) for word in X[:, 1])
     scores = np.array([v1.dot(v2.T)/(np.linalg.norm(v1)*np.linalg.norm(v2)) for v1, v2 in zip(A, B)])
-    return scipy.stats.spearmanr(scores, y).correlation
+    return scipy.stats.spearmanr(scores, y).correlation, missing_words, total_words
 
 
 def evaluate_on_all(w):

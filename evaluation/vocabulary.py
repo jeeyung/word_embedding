@@ -16,7 +16,7 @@ from six.moves import zip
 from six import iteritems
 from six import text_type as unicode
 from six import string_types
-from utils import _open
+from evaluation.utils import _open
 
 
 def count(lines):

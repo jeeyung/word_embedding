@@ -3,19 +3,17 @@
 """
  Functions for fetching analogy datasets
 """
-
+# sys.path.append("evaluation")
 from collections import defaultdict
 import glob
 import os
+import sys
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
-
 from sklearn.datasets.base import Bunch
 # from utils import _get_dataset_dir, _fetch_file, _change_list_to_np
-import sys
-sys.path.append("..")
-from utils import standardize_string
+from evaluation.utils import standardize_string
 
 
 def fetch_wordrep(subsample=None, rng=None):
@@ -137,7 +135,7 @@ def fetch_google_analogy():
     # url = "https://www.dropbox.com/s/eujtyfb5zem1mim/EN-GOOGLE.txt?dl=1"
     # with open(_fetch_file(url, "analogy/EN-GOOGLE", verbose=0), "r") as f:
     #     L = f.read().splitlines()
-    L = pd.read_csv('corpus/google.txt', header=None, sep="\n").values
+    L = pd.read_csv('evaluation/datasets/corpus/google.txt', header=None, sep="\n").values
 
     # Simple 4 word analogy questions with categories
     questions = []
@@ -199,8 +197,8 @@ def fetch_msr_analogy():
     We then systematically generated analogy questions by randomly matching each of the 100 words with 5 other words
     from the same category, and creating variants.
     """
-    questions = pd.read_csv('corpus/msr_questions.txt', header=None, sep=" ").values
-    answers = pd.read_csv('corpus/msr_answers.txt', header=None, sep=" ")
+    questions = pd.read_csv('evaluation/datasets/corpus/msr_questions.txt', header=None, sep=" ").values
+    answers = pd.read_csv('evaluation/datasets/corpus/msr_answers.txt', header=None, sep=" ")
     category = answers[0]
     answers = answers[1]
 

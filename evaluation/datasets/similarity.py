@@ -231,6 +231,7 @@ def fetch_RW():
     cols = data.columns[:2]
     for col in cols:
         data[col] = data[col].apply(preprocess_word)
+<<<<<<< HEAD
 
     data = data.values
 

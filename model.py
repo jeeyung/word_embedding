@@ -7,29 +7,41 @@ import numpy as np
 from dataloader import *
 import time 
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 class generator(nn.Module):
-    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout):
+    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device):
         super(generator, self).__init__()
+        self.multigpu = multigpu
+        self.device = device
         self.embedding = nn.Embedding(char_num, gen_embed_dim, padding_idx=0)
         self.lstm = nn.LSTM(gen_embed_dim, hidden_size, num_layers=num_layer,
-                    dropout=dropout, batch_first = True)
+                    dropout=dropout, batch_first = True, bidirectional=bidirectional)
                 
     def sorting(self, x, x_len):
         x_ordered = np.sort(x_len)[::-1]
         sort_idx = np.argsort(x_len)[::-1]
         unsort_idx = np.argsort(sort_idx)[::-1]
-        sort_idx= torch.from_numpy(sort_idx.copy()).to(device)
-        unsort_idx = torch.from_numpy(unsort_idx.copy()).to(device)
+        x_ordered = torch.from_numpy(x_ordered.copy()).to(torch.cuda.current_device())
+        sort_idx= torch.from_numpy(sort_idx.copy()).to(torch.cuda.current_device())
+        unsort_idx = torch.from_numpy(unsort_idx.copy()).to(torch.cuda.current_device())
         x = x.index_select(0, sort_idx)
         return x, unsort_idx, x_ordered
 
     def forward(self, x, x_len):
+        if self.multigpu:
+            total_len = x.size(0)*4
+            if torch.cuda.current_device() == 0:
+                x_len=x_len[:1*int(total_len/4)]
+            elif torch.cuda.current_device() == 1:
+                x_len=x_len[1*int(total_len/4):2*int(total_len/4)]
+            elif torch.cuda.current_device() == 2:
+                x_len=x_len[2*int(total_len/4):3*int(total_len/4)]
+            else:
+                x_len=x_len[3*int(total_len/4):total_len]
         x, unsort_idx, x_ordered = self.sorting(x, x_len)
         embedded = self.embedding(x)
         embedded = pack_padded_sequence(embedded, x_ordered, batch_first = True)
-        _, (h,c) = self.lstm(embedded)
+        print(embedded.shape)
+        _, (h,_) = self.lstm(embedded)
         ordered_output = h[-1].index_select(0, unsort_idx)
         return ordered_output
 
@@ -56,10 +68,10 @@ class skipgram(nn.Module):
         return -self.pos_loss(center, context) + -self.neg_loss(center, ns)
 
 class word_embed_ng(nn.Module):
-    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, last_hidden, k):
+    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, last_hidden, k, bidirectional, multigpu, device):
         super(word_embed_ng, self).__init__()
-        self.center_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout)
-        self.context_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout)
+        self.center_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
+        self.context_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
         self.mlp = nn.Linear(hidden_size, last_hidden)
         self.k = k
 
@@ -81,17 +93,27 @@ class word_embed_ng(nn.Module):
 
 if __name__=='__main__':
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = word_embed_ng(26, 10, 10, 1, 0.3, 10, 5)
-    model = model.to(device)
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    model = word_embed_ng(26, 10, 10, 1, 0.3, 10, 5, False, True, device)
+    # model = model.to(device)
     
-    text_loader = TextDataLoader('./data', batch_size = 2, window_size = 5, k=5)
+    # text_loader = TextDataLoader('./data', batch_size = 2, window_size = 5, k=5)
+    text_loader = TextDataLoader('./data', 'toy/merge.txt', 16, 5, 5, True, 0, 5, 1e-04)
     
-    for i, (pc, cl, pco, col, neg) in enumerate(text_loader):
-        start_time = time.time()
-        output = model(pco, col, pco, col, neg)
-        total_time = time.time() - start_time
-        print(output, total_time)
-        
+    for i, (center, context, neg) in enumerate(text_loader):
+        center, center_len = center
+        context, context_len = context
+        center = center.to(device)
+        context = context.to(device)
+        n =[]
+        for k in range(5):
+            padded_neg, neg_len = neg[k]
+            n.append((padded_neg.to(device), neg_len))
+        if torch.cuda.device_count() > 1:
+            print("using", torch.cuda.device_count(), "GPUs")
+            model = nn.DataParallel(model)
+        model = model.to(device)
+        output = model(center, center_len, context, context_len, neg)
+        print(output)
         break
         

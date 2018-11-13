@@ -6,12 +6,14 @@ from dataloader import TestDataset
 from evaluation.datasets.similarity import fetch_MEN, fetch_MTurk, fetch_RW, fetch_SimLex999, fetch_WS353
 from evaluation.datasets.analogy import fetch_google_analogy, fetch_msr_analogy
 from evaluation.evaluate import evaluate_similarity, evaluate_analogy
+from model import *
+from dataloader import *
 
 def character_embedding(model, data_dir='./data', batch_size=128):
-    test_loader = TestDataset(data_dir, batch_size)
+    test_loader = TestDataLoader(data_dir, batch_size)
     embeddings = []
     for words, length in zip(test_loader,test_loader):
-        embedding = model.mlp(model.center_generator(words, length))
+        embedding = model.mlp_center(model.center_generator(words, length))
         embeddings.append(embedding)
     embeddings = torch.cat(embeddings, 0)
     embedding_map = {}

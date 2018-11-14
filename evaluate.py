@@ -27,7 +27,7 @@ def evaluate(model, device, is_similarity, word2idx=None):
         embedding = model.state_dict()['center_embedding.weight']
         w = build_embedding_map(word2idx, embedding)
     elif isinstance(model, word_embed_ng):
-        w = character_embedding(model=model, device)
+        w = character_embedding(model=model, device=device)
     else:
         w = build_embedding_map_pretrained(word2idx, model)
     if is_similarity:

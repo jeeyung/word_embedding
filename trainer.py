@@ -139,10 +139,10 @@ def train(args):
         else:
             monitor_loss = 0
             start_time = time.time()
-            # monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler,
-            #                                 writer, text_loader, dataset_order, total_dataset_num)
-            # print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
-            #      (epoch), monitor_loss/ len(text_loader.dataset), time.time() - start_time))
+            monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler,
+                                            writer, text_loader, dataset_order, total_dataset_num)
+            print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
+                 (epoch), monitor_loss/ len(text_loader.dataset), time.time() - start_time))
             if epoch % args.save_frequency ==0:
                 torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +f'model_{epoch+1}.pt')
                 print("Model saved")

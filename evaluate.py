@@ -19,7 +19,7 @@ def character_embedding(model, device, data_dir='./data', batch_size=2): # ì—¬ê¸
     embeddings = torch.cat(embeddings, 0)
     embedding_map = {}
     for word, embedding in zip(test_loader.dataset.test_words, embeddings):
-        embedding_map[word] = embedding
+        embedding_map[word] = embedding.detech().cpu()
     return embedding_map
 
 def evaluate(model, device, is_similarity, word2idx=None):

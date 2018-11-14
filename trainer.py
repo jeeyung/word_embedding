@@ -52,10 +52,10 @@ def train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, 
                 step = i // args.log_frequency + epoch * len(text_loader) // args.log_frequency
             writer.add_scalar('Batch loss', loss / args.batch_size, step)
     if args.evaluation:
-        evaluation(args, writer, model, text_loader)
+        evaluation(args, writer, model, text_loader, epoch)
     return monitor_loss
 
-def evaluation(args, writer, model, text_loader):
+def evaluation(args, writer, model, text_loader, k):
     if args.model_name == "sgns":
         sim_results = evaluate(model, True, text_loader.dataset.word2idx)
         ana_results = evaluate(model, False, text_loader.dataset.word2idx)
@@ -139,10 +139,10 @@ def train(args):
         else:
             monitor_loss = 0
             start_time = time.time()
-            monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, 
-                                            writer, text_loader, dataset_order, total_dataset_num)
-            print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
-                 (epoch), monitor_loss/ len(text_loader.dataset), time.time() - start_time))
+            # monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler,
+            #                                 writer, text_loader, dataset_order, total_dataset_num)
+            # print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
+            #      (epoch), monitor_loss/ len(text_loader.dataset), time.time() - start_time))
             if epoch % args.save_frequency ==0:
                 torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +f'model_{epoch+1}.pt')
                 print("Model saved")

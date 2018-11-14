@@ -9,11 +9,13 @@ from evaluation.evaluate import evaluate_similarity, evaluate_analogy
 from model import *
 from dataloader import *
 
-def character_embedding(model, data_dir='./data', batch_size=128): # 여기
+def character_embedding(model, data_dir='./data', batch_size=2): # 여기
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     test_loader = TestDataLoader(data_dir, batch_size)
     embeddings = []
     for words, length in test_loader:
-        embedding = model.mlp_center(model.center_generator(torch.t(words), length))
+        words = words.to(device)
+        embedding = model.mlp_center(model.center_generator(words, length))
         embeddings.append(embedding)
     embeddings = torch.cat(embeddings, 0)
     embedding_map = {}
@@ -22,7 +24,6 @@ def character_embedding(model, data_dir='./data', batch_size=128): # 여기
     return embedding_map
 
 def evaluate(model, is_similarity, word2idx=None):
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if isinstance(model, skipgram):
         embedding = model.state_dict()['center_embedding.weight']
         w = build_embedding_map(word2idx, embedding)

@@ -31,7 +31,7 @@ def collate_text(list_inputs):
 def collate_word(words):
     words.sort(key=lambda x: len(x), reverse=True)
     length_list = [len(words[i]) for i in range(len(words))]
-    padded_words = pad_sequence(words)
+    padded_words = pad_sequence(words).transpose(0,1)
     return padded_words, length_list
 
 class TextDataLoader(DataLoader):

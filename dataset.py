@@ -273,8 +273,6 @@ class TestDataset(Dataset):
         word_idx = torch.tensor(self.words[idx])
         return word_idx
 
-
-
 def trial(i):
     dataset = 'wiki_{0:02d}.bz2'.format(i)
     print("file", i,"pid=", os.getpid())
@@ -285,7 +283,8 @@ def trial(i):
     #for cluster_server
     # text_dataset = TextDataset('/disk2/wiki_dump/A/', dataset, 5, 7, 5, 1e-04, True)
     #for dm_server
-    text_dataset = TextDataset('/data/jeeyung/wiki_dump/A/', dataset, 5, 7, 5, 1e-04, False)
+    #text_dataset = TextDataset('/data/jeeyung/wiki_dump/A/', dataset, 5, 7, 5, 1e-04, False)
+    text_dataset = TextDataset('/data/jeeyung/wiki_dump/C/', dataset, 5, 7, 5, 1e-04, True)
 
 if __name__ == '__main__':
     # t1 = time.time()

@@ -15,14 +15,19 @@ class generator(nn.Module):
         self.embedding = nn.Embedding(char_num, gen_embed_dim, padding_idx=0)
         self.lstm = nn.LSTM(gen_embed_dim, hidden_size, num_layers=num_layer,
                     dropout=dropout, batch_first = True, bidirectional=bidirectional)
-                
+        for name, param in self.lstm.named_parameters():
+            if "bias" in name:
+                nn.init.constant_(param, 0.0)
+            else: 
+                nn.init.xavier_normal_(param)
+
     def sorting(self, x, x_len):
         x_ordered = np.sort(x_len)[::-1]
         sort_idx = np.argsort(x_len)[::-1]
         unsort_idx = np.argsort(sort_idx)[::-1]
-        x_ordered = torch.from_numpy(x_ordered.copy()).to(torch.cuda.current_device())
-        sort_idx= torch.from_numpy(sort_idx.copy()).to(torch.cuda.current_device())
-        unsort_idx = torch.from_numpy(unsort_idx.copy()).to(torch.cuda.current_device())
+        x_ordered = torch.from_numpy(x_ordered.copy()).to(self.device)
+        sort_idx= torch.from_numpy(sort_idx.copy()).to(self.device)
+        unsort_idx = torch.from_numpy(unsort_idx.copy()).to(self.device)
         x = x.index_select(0, sort_idx)
         return x, unsort_idx, x_ordered
 
@@ -40,7 +45,6 @@ class generator(nn.Module):
         x, unsort_idx, x_ordered = self.sorting(x, x_len)
         embedded = self.embedding(x)
         embedded = pack_padded_sequence(embedded, x_ordered, batch_first = True)
-        print(embedded.shape)
         _, (h,_) = self.lstm(embedded)
         ordered_output = h[-1].index_select(0, unsort_idx)
         return ordered_output
@@ -72,8 +76,11 @@ class word_embed_ng(nn.Module):
         super(word_embed_ng, self).__init__()
         self.center_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
         self.context_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
-        self.mlp = nn.Linear(hidden_size, last_hidden)
+        self.mlp_center = nn.Linear(hidden_size, last_hidden)
+        self.mlp_context= nn.Linear(hidden_size, last_hidden)
         self.k = k
+        self.tanh = nn.Tanh()
+        self.sigmoid = nn.Sigmoid()
 
     def cal_loss(self, x, y, neg):
         score_target = torch.bmm(x.unsqueeze(1),y.unsqueeze(2))
@@ -82,23 +89,22 @@ class word_embed_ng(nn.Module):
         return loss
 
     def forward(self, x, x_len, y, y_len, neg):
-        prediction = self.mlp(self.center_generator(x, x_len))
-        target = self.mlp(self.context_generator(y, y_len))
+        prediction = self.tanh(self.mlp_center(self.center_generator(x, x_len)))
+        target = self.tanh(self.mlp_context(self.context_generator(y, y_len)))
         neg_output =[]
         for i in range(self.k):
-            neg_output.append(self.mlp(self.context_generator(neg[i][0], neg[i][1])))
+            neg_output.append(self.tanh(self.mlp_context(self.context_generator(neg[i][0], neg[i][1]))))
         neg_output_tensor = torch.stack(neg_output)
         loss = self.cal_loss(prediction, target, neg_output_tensor)
         return loss
 
 if __name__=='__main__':
-
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = word_embed_ng(26, 10, 10, 1, 0.3, 10, 5, False, True, device)
     # model = model.to(device)
     
     # text_loader = TextDataLoader('./data', batch_size = 2, window_size = 5, k=5)
-    text_loader = TextDataLoader('./data', 'toy/merge.txt', 16, 5, 5, True, 0, 5, 1e-04)
+    text_loader = TextDataLoader('./data', 'toy/merge.txt', 8, 5, 5, True, 0, 5, 1e-04)
     
     for i, (center, context, neg) in enumerate(text_loader):
         center, center_len = center
@@ -111,7 +117,7 @@ if __name__=='__main__':
             n.append((padded_neg.to(device), neg_len))
         if torch.cuda.device_count() > 1:
             print("using", torch.cuda.device_count(), "GPUs")
-            model = nn.DataParallel(model)
+            model = nn.DataParallel(model, device_ids=[2,3])
         model = model.to(device)
         output = model(center, center_len, context, context_len, neg)
         print(output)

@@ -6,12 +6,14 @@ from dataloader import TestDataset
 from evaluation.datasets.similarity import fetch_MEN, fetch_MTurk, fetch_RW, fetch_SimLex999, fetch_WS353
 from evaluation.datasets.analogy import fetch_google_analogy, fetch_msr_analogy
 from evaluation.evaluate import evaluate_similarity, evaluate_analogy
+from model import *
+from dataloader import *
 
-def character_embedding(model, data_dir='./data', batch_size=128):
-    test_loader = TestDataset(data_dir, batch_size)
+def character_embedding(model, data_dir='./data', batch_size=128): # 여기
+    test_loader = TestDataLoader(data_dir, batch_size)
     embeddings = []
-    for words, length in zip(test_loader,test_loader):
-        embedding = model.mlp(model.center_generator(words, length))
+    for words, length in test_loader:
+        embedding = model.mlp_center(model.center_generator(torch.t(words), length))
         embeddings.append(embedding)
     embeddings = torch.cat(embeddings, 0)
     embedding_map = {}
@@ -24,8 +26,10 @@ def evaluate(model, is_similarity, word2idx=None):
     if isinstance(model, skipgram):
         embedding = model.state_dict()['center_embedding.weight']
         w = build_embedding_map(word2idx, embedding)
-    else:
+    else if isinstance(model, word_embed_ng:
         w = character_embedding(model=model)
+    else:
+        w = build_embedding_map_pretrained(word2idx, model)
     if is_similarity:
         tasks = {
             "MTurk": fetch_MTurk(),
@@ -59,14 +63,44 @@ def build_embedding_map(word2idx, embedding_matrix):
         embedding_map[word] = embedding_matrix[torch.LongTensor([word2idx[word]])]
     return embedding_map
 
+def build_embedding_map_pretrained(word2idx, embedding_matrix):
+    embedding_map = {}
+    for word in word2idx.keys():
+        embedding_map[word] = embedding_matrix(torch.LongTensor([word2idx[word]]))
+    return embedding_map
+                                           
 
 if __name__ == "__main__":
     args = get_config()
     text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size,
-                                 args.window_size, args.neg_sample_size, args.is_character, args.num_worker)
+                                 args.window_size, args.neg_sample_size, args.is_character, args.num_workers,
+                                 args.remove_th, args.subsample_th)
 
     idx2word = text_loader.dataset.idx2word
     word2idx = text_loader.dataset.word2idx
-    params = torch.load(args.log_dir + 'model_best.pt', map_location=lambda storage, loc: storage)
-    print("Model loaded")
-    evaluate(get_config(), False)
+    if False:
+        # testing skipgram model
+        model = skipgram(40000, args.embed_size)
+
+        params = torch.load(args.log_dir + 'model_best.pt', map_location=lambda storage, loc: storage)
+        print("Skipgram model loaded")
+        print("Similarity test for skipgram model")
+        evaluate(model=model, is_similarity=True, word2idx=word2idx)
+        print("Analogy test for skipgram model")
+        evaluate(model=model, is_similarity=False, word2idx=word2idx)
+
+    if True:
+        # embed:256, hidden:512, negative sampling:5
+        args.embed_size = 256
+        args.hidden_size = 512
+        args.neg_sample_size = 5
+        model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
+                              args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional,
+                              args.multigpu, args.device)
+        params = torch.load(args.log_dir + 'rnn_model_best.pt', map_location=lambda storage, loc: storage)
+        print("Character embedding model loaded")
+        print("Similarity test for character embedding model")
+        evaluate(model=model, is_similarity=True, word2idx=None)
+        print("Analogy test for character embedding model")
+        evaluate(model=model, is_similarity=False, word2idx=None)
+

@@ -65,7 +65,8 @@ def build_embedding_map(word2idx, embedding_matrix):
 if __name__ == "__main__":
     args = get_config()
     text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size,
-                                 args.window_size, args.neg_sample_size, args.is_character, args.num_worker)
+                                 args.window_size, args.neg_sample_size, args.is_character, args.num_workers,
+                                 args.remove_th, args.subsample_th)
 
     idx2word = text_loader.dataset.idx2word
     word2idx = text_loader.dataset.word2idx

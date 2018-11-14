@@ -11,3 +11,4 @@ corpus/
 *.tab
 *.ipynb
 .vscode/
+classfication.py

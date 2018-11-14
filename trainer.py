@@ -100,7 +100,7 @@ def train(args):
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = StepLR(optimizer, step_size=10, gamma=0.9)
     if args.load_model_code is not None:
-        model.load_state_dict(torch.load(args.log_dir + args.load_model_code + '/model_best.pt'))
+        model.load_state_dict(torch.load(args.log_dir + args.load_model_code + '/model_A_0.pt'))
         args.timestamp = args.load_model_code[:12]
         print('Model loaded')
     writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)

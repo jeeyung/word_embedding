@@ -273,8 +273,6 @@ class TestDataset(Dataset):
         word_idx = torch.tensor(self.words[idx])
         return word_idx
 
-
-
 def trial(i):
     dataset = 'wiki_{0:02d}.bz2'.format(i)
     print("file", i,"pid=", os.getpid())

@@ -11,7 +11,8 @@ def get_config():
 
     model_arg = parser.add_argument_group('Model')
     model_arg.add_argument('--model-name', default='sgns', type=str)
-    model_arg.add_argument('--embed-size', default=128, type=int)
+    model_arg.add_argument('--embed-size', default=300, type=int)
+    model_arg.add_argument('--char-embed-size', default=128, type=int)
     model_arg.add_argument('--vocab-size', default=27, type=int)
     model_arg.add_argument('--hidden-size', default=256, type=int)
     model_arg.add_argument('--dropout', default=0.2, type= float)

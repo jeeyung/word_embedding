@@ -92,8 +92,8 @@ def train(args):
             # model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
             model = skipgram(40000, args.embed_size)
         else:
-            model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
-                                args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional, args.multigpu, args.device)
+            model = word_embed_ng(args.vocab_size, args.char_embed_size, args.hidden_size,
+                                args.num_layer, args.dropout, args.mlp_size, args.embed_size, args.neg_sample_size, args.bidirectional, args.multigpu, args.device)
     if torch.cuda.device_count() > 1 and args.multigpu:
         print("using", torch.cuda.device_count(), "GPUs")
         model = nn.DataParallel(model)
@@ -103,7 +103,7 @@ def train(args):
     scheduler = StepLR(optimizer, step_size=10, gamma=0.9)
     if args.load_model_code is not None:
         if args.load_file is not None:
-            model_name = '/model' + '_' + f'{args.load_file} + 'pt'
+            model_name = '/model' + '_' + f'{args.load_file}' + '.pt'
         else:
             model_name = '/model_best.pt'
         model.load_state_dict(torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage))

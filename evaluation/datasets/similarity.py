@@ -36,10 +36,13 @@ def fetch_MTurk():
 
     Additionally scores were multiplied by factor of 2.
     """
-    data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/MTURK-771.csv'), header=None, sep=",").values
+    data = pd.read_csv(os.path.abspath('evaluation/datasets/corpus/MTURK-771.csv'), header=None, sep=",")
     # data = _get_as_pd('https://www.dropbox.com/s/f1v4ve495mmd9pw/EN-TRUK.txt?dl=1',
     #                   'similarity', header=None, sep=" ").values
-
+    cols = data.columns[:2]
+    for col in cols:
+        data[col] = data[col].apply(preprocess_word)
+    data = data.values
     return Bunch(X=data[:, 0:2].astype("object"),
                  y=2 * data[:, 2].astype(np.float))
 
@@ -228,7 +231,9 @@ def fetch_RW():
     cols = data.columns[:2]
     for col in cols:
         data[col] = data[col].apply(preprocess_word)
+
     data = data.values
+
     return Bunch(X=data[:, 0:2].astype("object"),
                  y=data[:, 2].astype(np.float),
                  sd=np.std(data[:, 3:].astype(np.float)))

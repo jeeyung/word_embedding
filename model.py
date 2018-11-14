@@ -15,7 +15,12 @@ class generator(nn.Module):
         self.embedding = nn.Embedding(char_num, gen_embed_dim, padding_idx=0)
         self.lstm = nn.LSTM(gen_embed_dim, hidden_size, num_layers=num_layer,
                     dropout=dropout, batch_first = True, bidirectional=bidirectional)
-                
+        for name, param in self.lstm.named_parameters():
+            if "bias" in name:
+                nn.init.constant_(param, 0.0)
+            else: 
+                nn.init.xavier_normal_(param)
+
     def sorting(self, x, x_len):
         x_ordered = np.sort(x_len)[::-1]
         sort_idx = np.argsort(x_len)[::-1]
@@ -74,6 +79,8 @@ class word_embed_ng(nn.Module):
         self.mlp_center = nn.Linear(hidden_size, last_hidden)
         self.mlp_context= nn.Linear(hidden_size, last_hidden)
         self.k = k
+        self.tanh = nn.Tanh()
+        self.sigmoid = nn.Sigmoid()
 
     def cal_loss(self, x, y, neg):
         score_target = torch.bmm(x.unsqueeze(1),y.unsqueeze(2))
@@ -82,17 +89,17 @@ class word_embed_ng(nn.Module):
         return loss
 
     def forward(self, x, x_len, y, y_len, neg):
-        prediction = self.mlp_center(self.center_generator(x, x_len))
-        target = self.mlp_context(self.context_generator(y, y_len))
+        prediction = self.tanh(self.mlp_center(self.center_generator(x, x_len)))
+        target = self.tanh(self.mlp_context(self.context_generator(y, y_len)))
         neg_output =[]
         for i in range(self.k):
-            neg_output.append(self.mlp_context(self.context_generator(neg[i][0], neg[i][1])))
+            neg_output.append(self.tanh(self.mlp_context(self.context_generator(neg[i][0], neg[i][1]))))
         neg_output_tensor = torch.stack(neg_output)
         loss = self.cal_loss(prediction, target, neg_output_tensor)
         return loss
 
 if __name__=='__main__':
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = word_embed_ng(26, 10, 10, 1, 0.3, 10, 5, False, True, device)
     # model = model.to(device)
     

@@ -37,6 +37,8 @@ def train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, 
             optimizer.zero_grad()
             loss = model(center, context, neg)
         loss.backward()
+        if not args.model_name == 'sgns':
+            torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
         optimizer.step()
         monitor_loss += loss.item()
         if i % args.log_frequency == 0:
@@ -55,14 +57,6 @@ def train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, 
 
 def evaluation(args, writer, model, text_loader):
     if args.model_name == "sgns":
-        sim_results = evaluate(model.state_dict(), text_loader.dataset.word2idx, True)
-        ana_results = evaluate(model.state_dict(), text_loader.dataset.word2idx, False)
-        sim_score, sim_known = result2dict(sim_results)
-        ana_score, ana_known = result2dict(ana_results)
-        writer.add_scalars('Similarity score', sim_score, k)
-        writer.add_scalars('Similarity known', sim_known, k)
-        writer.add_scalars('Analogy score', ana_score, k)
-        writer.add_scalars('Analogy known', ana_known, k)
         sim_results = evaluate(model, True, text_loader.dataset.word2idx)
         ana_results = evaluate(model, False, text_loader.dataset.word2idx)
     else:
@@ -81,7 +75,10 @@ def train(args):
     if args.is_character:
         args.model_name = "cha-level"
     if args.dataset == "wiki_dump/":
-        datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
+        if args.dataset_f_name == "B":
+            datasetlist_dir = ["B","C","D","E","F","G","H","I","J","K","L"] 
+        else:
+            datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
         if args.model_name == 'sgns':
             model = skipgram(40000, args.embed_size)
         else:
@@ -107,12 +104,12 @@ def train(args):
         args.timestamp = args.load_model_code[:12]
         print('Model loaded')
     writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)
+    train_loss = 0
     for epoch in range(args.epochs):
-        dataset_order = 0
-        total_dataset_num = 0
-        train_loss = 0
-        monitor_loss = 0
         if args.dataset=="wiki_dump/":
+            dataset_order = 0
+            total_dataset_num = 0
+            monitor_loss = 0
             for dataset_dir in datasetlist_dir:
                 for k in range(100):
                     start_time = time.time()
@@ -122,7 +119,7 @@ def train(args):
                                             args.is_character, args.num_workers, args.remove_th, args.subsample_th)
                     print("made text loader")
                     monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, writer,
-                                                     text_loader, dataset_order, total_dataset_num)
+                                                    text_loader, dataset_order, total_dataset_num)
                     dataset_order += 1
                     total_dataset_num += len(text_loader.dataset)
                     print('====> Dataset: {} Average loss: {:.4f} / Time: {:.4f}'.format(
@@ -140,8 +137,10 @@ def train(args):
                     writer.add_scalar('Epoch time', time.time() - start_time, k)
                     del text_loader
         else:
+            monitor_loss = 0
             start_time = time.time()
-            monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, writer, text_loader, dataset_order, total_dataset_num)
+            monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, 
+                                            writer, text_loader, dataset_order, total_dataset_num)
             print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
                  (epoch), monitor_loss/ len(text_loader.dataset), time.time() - start_time))
             if epoch % args.save_frequency ==0:

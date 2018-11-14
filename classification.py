@@ -22,5 +22,3 @@ news_20_test = fetch_20newsgroups(subset='test', shuffle=True, random_state=42)
 docs_test = news_20_test.data
 predicted = count_vect.fit_transform(docs_test)
 
-
-

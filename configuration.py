@@ -43,6 +43,7 @@ def get_config():
     train_arg.add_argument('--timestamp', default=datetime.now().strftime("%y%m%d%H%M%S"), type=str)
     train_arg.add_argument('--load-model', default=None, type=str)
     train_arg.add_argument('--load-model-code', default=None, type=str)
+    train_arg.add_argument('--load-file', default=None, type=str)
     train_arg.add_argument('--log-dir', default='saved/runs/', type=str)
     train_arg.add_argument('--multigpu', action='store_true')
 

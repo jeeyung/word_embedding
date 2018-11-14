@@ -38,6 +38,7 @@ def train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, 
             loss = model(center, context, neg)
         loss.backward()
         if not args.model_name == 'sgns':
+            print(1)
             torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
         optimizer.step()
         monitor_loss += loss.item()
@@ -88,7 +89,8 @@ def train(args):
         text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                  args.is_character, args.num_workers, args.remove_th, args.subsample_th)
         if args.model_name == 'sgns':
-            model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
+            # model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
+            model = skipgram(40000, args.embed_size)
         else:
             model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
                                 args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional, args.multigpu, args.device)
@@ -100,7 +102,11 @@ def train(args):
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = StepLR(optimizer, step_size=10, gamma=0.9)
     if args.load_model_code is not None:
-        model.load_state_dict(torch.load(args.log_dir + args.load_model_code + '/model_best.pt'))
+        if args.load_file is not None:
+            model_name = '/model' + '_' + f'{args.load_file} + 'pt'
+        else:
+            model_name = '/model_best.pt'
+        model.load_state_dict(torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage))
         args.timestamp = args.load_model_code[:12]
         print('Model loaded')
     writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)

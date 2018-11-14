@@ -10,8 +10,8 @@ from model import *
 from dataloader import *
 from evaluate import evaluate
 
-google_path = "/media/hk/D/GoogleNews-vectors-negative300.bin"
-fasttext_path = "/media/hk/D/wiki-news-300d-1M-subword.vec"
+google_path = "data/pretrained/GoogleNews-vectors-negative300.bin"
+fasttext_path = "data/pretrained/wiki-news-300d-1M-subword.vec"
 
 def pre_embedding(path):
     if "bin" in path:

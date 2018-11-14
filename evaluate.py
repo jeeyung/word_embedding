@@ -26,7 +26,7 @@ def evaluate(model, is_similarity, word2idx=None):
     if isinstance(model, skipgram):
         embedding = model.state_dict()['center_embedding.weight']
         w = build_embedding_map(word2idx, embedding)
-    else if isinstance(model, word_embed_ng:
+    elif isinstance(model, word_embed_ng):
         w = character_embedding(model=model)
     else:
         w = build_embedding_map_pretrained(word2idx, model)

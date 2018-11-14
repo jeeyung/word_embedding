@@ -9,7 +9,7 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.datasets.base import Bunch
-from preprocess import preprocess_word
+from evaluation.preprocess import preprocess_word
 # from .utils import _get_as_pd, _fetch_file
 
 

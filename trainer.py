@@ -106,10 +106,10 @@ def train(args):
     writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)
     train_loss = 0
     for epoch in range(args.epochs):
+        dataset_order = 0
+        total_dataset_num = 0
+        monitor_loss = 0
         if args.dataset=="wiki_dump/":
-            dataset_order = 0
-            total_dataset_num = 0
-            monitor_loss = 0
             for dataset_dir in datasetlist_dir:
                 for k in range(100):
                     start_time = time.time()

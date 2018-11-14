@@ -26,8 +26,10 @@ def evaluate(model, is_similarity, word2idx=None):
     if isinstance(model, skipgram):
         embedding = model.state_dict()['center_embedding.weight']
         w = build_embedding_map(word2idx, embedding)
-    else:
+    else if isinstance(model, word_embed_ng:
         w = character_embedding(model=model)
+    else:
+        w = build_embedding_map_pretrained(word2idx, model)
     if is_similarity:
         tasks = {
             "MTurk": fetch_MTurk(),
@@ -61,6 +63,12 @@ def build_embedding_map(word2idx, embedding_matrix):
         embedding_map[word] = embedding_matrix[torch.LongTensor([word2idx[word]])]
     return embedding_map
 
+def build_embedding_map_pretrained(word2idx, embedding_matrix):
+    embedding_map = {}
+    for word in word2idx.keys():
+        embedding_map[word] = embedding_matrix(torch.LongTensor([word2idx[word]]))
+    return embedding_map
+                                           
 
 if __name__ == "__main__":
     args = get_config()

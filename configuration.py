@@ -17,7 +17,7 @@ def get_config():
     model_arg.add_argument('--hidden-size', default=256, type=int)
     model_arg.add_argument('--dropout', default=0.2, type= float)
     model_arg.add_argument('--num-layer', default=1, type=int)
-    model_arg.add_argument('--mlp-size', default=128, type=int)
+    model_arg.add_argument('--mlp-size', default=400, type=int)
     model_arg.add_argument('--bidirectional', action='store_true')
 
     data_arg = parser.add_argument_group('Data')

@@ -285,7 +285,7 @@ def trial(i):
     #for cluster_server
     # text_dataset = TextDataset('/disk2/wiki_dump/A/', dataset, 5, 7, 5, 1e-04, True)
     #for dm_server
-    text_dataset = TextDataset('/data/jeeyung/wiki_dump/A/', dataset, 5, 7, 5, 1e-04, True)
+    text_dataset = TextDataset('/data/jeeyung/wiki_dump/C/', dataset, 5, 7, 5, 1e-04, True)
 
 if __name__ == '__main__':
     # t1 = time.time()
@@ -296,7 +296,7 @@ if __name__ == '__main__':
     # index = 1
     # print(text_dataset.word_pairs[index])
     p = Pool(10)
-    p.map(trial, range(23,100))
+    p.map(trial, range(0,100))
     p.close()
     p.join()
     

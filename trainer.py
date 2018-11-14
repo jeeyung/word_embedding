@@ -52,16 +52,16 @@ def train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, 
                 step = i // args.log_frequency + epoch * len(text_loader) // args.log_frequency
             writer.add_scalar('Batch loss', loss / args.batch_size, step)
     if args.evaluation:
-        evaluation(args, writer, model, text_loader, epoch)
+        evaluation(args, writer, model, device, text_loader, epoch)
     return monitor_loss
 
-def evaluation(args, writer, model, text_loader, k):
+def evaluation(args, writer, model, device, text_loader, k):
     if args.model_name == "sgns":
-        sim_results = evaluate(model, True, text_loader.dataset.word2idx)
-        ana_results = evaluate(model, False, text_loader.dataset.word2idx)
+        sim_results = evaluate(model, device, True, text_loader.dataset.word2idx)
+        ana_results = evaluate(model, device, False, text_loader.dataset.word2idx)
     else:
-        sim_results = evaluate(model, True)
-        ana_results = evaluate(model, False)
+        sim_results = evaluate(model, device, True)
+        ana_results = evaluate(model, device, False)
     sim_score, sim_known = result2dict(sim_results)
     ana_score, ana_known = result2dict(ana_results)
     writer.add_scalars('Similarity score', sim_score, k)

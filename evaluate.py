@@ -9,8 +9,7 @@ from evaluation.evaluate import evaluate_similarity, evaluate_analogy
 from model import *
 from dataloader import *
 
-def character_embedding(model, data_dir='./data', batch_size=2): # 여기
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+def character_embedding(model, device, data_dir='./data', batch_size=2): # 여기
     test_loader = TestDataLoader(data_dir, batch_size)
     embeddings = []
     for words, length in test_loader:
@@ -23,12 +22,12 @@ def character_embedding(model, data_dir='./data', batch_size=2): # 여기
         embedding_map[word] = embedding
     return embedding_map
 
-def evaluate(model, is_similarity, word2idx=None):
+def evaluate(model, device, is_similarity, word2idx=None):
     if isinstance(model, skipgram):
         embedding = model.state_dict()['center_embedding.weight']
         w = build_embedding_map(word2idx, embedding)
     elif isinstance(model, word_embed_ng):
-        w = character_embedding(model=model)
+        w = character_embedding(model=model, device)
     else:
         w = build_embedding_map_pretrained(word2idx, model)
     if is_similarity:

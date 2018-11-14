@@ -9,11 +9,11 @@ from evaluation.evaluate import evaluate_similarity, evaluate_analogy
 from model import *
 from dataloader import *
 
-def character_embedding(model, data_dir='./data', batch_size=128):
+def character_embedding(model, data_dir='./data', batch_size=128): # 여기
     test_loader = TestDataLoader(data_dir, batch_size)
     embeddings = []
-    for words, length in zip(test_loader,test_loader):
-        embedding = model.mlp_center(model.center_generator(words, length))
+    for words, length in test_loader:
+        embedding = model.mlp_center(model.center_generator(torch.t(words), length))
         embeddings.append(embedding)
     embeddings = torch.cat(embeddings, 0)
     embedding_map = {}
@@ -70,6 +70,29 @@ if __name__ == "__main__":
 
     idx2word = text_loader.dataset.idx2word
     word2idx = text_loader.dataset.word2idx
-    params = torch.load(args.log_dir + 'model_best.pt', map_location=lambda storage, loc: storage)
-    print("Model loaded")
-    evaluate(get_config(), False)
+    if False:
+        # testing skipgram model
+        model = skipgram(40000, args.embed_size)
+
+        params = torch.load(args.log_dir + 'model_best.pt', map_location=lambda storage, loc: storage)
+        print("Skipgram model loaded")
+        print("Similarity test for skipgram model")
+        evaluate(model=model, is_similarity=True, word2idx=word2idx)
+        print("Analogy test for skipgram model")
+        evaluate(model=model, is_similarity=False, word2idx=word2idx)
+
+    if True:
+        # embed:256, hidden:512, negative sampling:5
+        args.embed_size = 256
+        args.hidden_size = 512
+        args.neg_sample_size = 5
+        model = word_embed_ng(args.vocab_size, args.embed_size, args.hidden_size,
+                              args.num_layer, args.dropout, args.mlp_size, args.neg_sample_size, args.bidirectional,
+                              args.multigpu, args.device)
+        params = torch.load(args.log_dir + 'rnn_model_best.pt', map_location=lambda storage, loc: storage)
+        print("Character embedding model loaded")
+        print("Similarity test for character embedding model")
+        evaluate(model=model, is_similarity=True, word2idx=None)
+        print("Analogy test for character embedding model")
+        evaluate(model=model, is_similarity=False, word2idx=None)
+

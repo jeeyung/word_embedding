@@ -72,7 +72,7 @@ class skipgram(nn.Module):
         return -self.pos_loss(center, context) + -self.neg_loss(center, ns)
 
 class word_embed_ng(nn.Module):
-    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, fc_hidden, embed_size, k, bidirectional, multigpu, device):
+    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, fc_hidden, embed_size, k, bidirectional, multigpu, device, models):
         super(word_embed_ng, self).__init__()
         self.center_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
         self.context_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
@@ -83,6 +83,7 @@ class word_embed_ng(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self.last_fc_cen = nn.Linear(fc_hidden, embed_size)
         self.last_fc_con = nn.Linear(fc_hidden, embed_size)
+        self.models = models
 
     def cal_loss(self, x, y, neg):
         score_target = torch.bmm(x.unsqueeze(1),y.unsqueeze(2))
@@ -91,11 +92,24 @@ class word_embed_ng(nn.Module):
         return loss
 
     def forward(self, x, x_len, y, y_len, neg):
-        prediction = self.last_fc_cen(self.tanh(self.mlp_center(self.center_generator(x, x_len))))
-        target = self.last_fc_con(self.tanh(self.mlp_context(self.context_generator(y, y_len))))
-        neg_output =[]
-        for i in range(self.k):
-            neg_output.append(self.last_fc_con(self.tanh(self.mlp_context(self.context_generator(neg[i][0], neg[i][1])))))
+        if self.models == "tanh":
+            prediction = self.tanh(self.mlp_center(self.center_generator(x, x_len)))
+            target = self.tanh(self.mlp_context(self.context_generator(y, y_len)))
+            neg_output =[]
+            for i in range(self.k):
+                neg_output.append(self.tanh(self.mlp_context(self.context_generator(neg[i][0], neg[i][1]))))
+        elif self.models == "linear"
+            prediction = self.mlp_center(self.center_generator(x, x_len))
+            target = self.mlp_context(self.context_generator(y, y_len))
+            neg_output =[]
+            for i in range(self.k):
+                neg_output.append(self.mlp_context(self.context_generator(neg[i][0], neg[i][1])))
+        else:
+            prediction = self.last_fc_cen(self.tanh(self.mlp_center(self.center_generator(x, x_len))))
+            target = self.last_fc_con(self.tanh(self.mlp_context(self.context_generator(y, y_len))))
+            neg_output =[]
+            for i in range(self.k):
+                neg_output.append(self.last_fc_con(self.tanh(self.mlp_context(self.context_generator(neg[i][0], neg[i][1])))))
         neg_output_tensor = torch.stack(neg_output)
         loss = self.cal_loss(prediction, target, neg_output_tensor)
         return loss

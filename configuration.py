@@ -11,6 +11,7 @@ def get_config():
 
     model_arg = parser.add_argument_group('Model')
     model_arg.add_argument('--model-name', default='sgns', type=str)
+    model_arg.add_argument('--model-category', type=str, required=True)
     model_arg.add_argument('--embed-size', default=300, type=int)
     model_arg.add_argument('--char-embed-size', default=128, type=int)
     model_arg.add_argument('--vocab-size', default=27, type=int)
@@ -59,6 +60,6 @@ def get_config():
     args.device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     config_list = [args.model_name, args.embed_size, args.hidden_size,\
                    args.dataset, args.window_size, args.neg_sample_size, args.is_character,\
-                   args.device, args.batch_size, args.epochs, args.lr, args.bidirectional, args.num_layer, args.memo]
+                   args.device, args.batch_size, args.epochs, args.lr, args.bidirectional, args.num_layer, args.model_category, args.memo]
     args.config = '_'.join(list(map(str, config_list))).replace("/", ".")
     return args

@@ -38,7 +38,6 @@ def train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, 
             loss = model(center, context, neg)
         loss.backward()
         if not args.model_name == 'sgns':
-            print(1)
             torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
         optimizer.step()
         monitor_loss += loss.item()
@@ -84,7 +83,8 @@ def train(args):
             model = skipgram(40000, args.embed_size)
         else:
             model = word_embed_ng(args.vocab_size, args.char_embed_size, args.hidden_size,
-                                args.num_layer, args.dropout, args.mlp_size, args.embed_size, args.neg_sample_size, args.bidirectional, args.multigpu, args.device)
+                                args.num_layer, args.dropout, args.mlp_size, args.embed_size, args.neg_sample_size, args.bidirectional,
+                                args.multigpu, args.device, args.model_category)
     else:
         text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                  args.is_character, args.num_workers, args.remove_th, args.subsample_th)
@@ -93,7 +93,8 @@ def train(args):
             model = skipgram(40000, args.embed_size)
         else:
             model = word_embed_ng(args.vocab_size, args.char_embed_size, args.hidden_size,
-                                args.num_layer, args.dropout, args.mlp_size, args.embed_size, args.neg_sample_size, args.bidirectional, args.multigpu, args.device)
+                                args.num_layer, args.dropout, args.mlp_size, args.embed_size, 
+                                args.neg_sample_size, args.bidirectional, args.multigpu, args.device, args.model_category)
     if torch.cuda.device_count() > 1 and args.multigpu:
         print("using", torch.cuda.device_count(), "GPUs")
         model = nn.DataParallel(model)
@@ -133,7 +134,7 @@ def train(args):
                     monitor_loss/ total_dataset_num,
                     time.time() - start_time))
                     if k % args.save_frequency ==0:
-                        torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +f'model_{dataset_dir}_{k}.pt')
+                        torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +f'model_{dataset_dir}_{k+args.dataset_order}.pt')
                         print("Model saved")
                     if train_loss > monitor_loss/total_dataset_num:
                         torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')

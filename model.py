@@ -98,7 +98,7 @@ class word_embed_ng(nn.Module):
             neg_output =[]
             for i in range(self.k):
                 neg_output.append(self.tanh(self.mlp_context(self.context_generator(neg[i][0], neg[i][1]))))
-        elif self.models == "linear"
+        elif self.models == "linear":
             prediction = self.mlp_center(self.center_generator(x, x_len))
             target = self.mlp_context(self.context_generator(y, y_len))
             neg_output =[]

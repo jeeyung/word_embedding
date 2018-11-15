@@ -52,7 +52,10 @@ def train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, 
                 step = i // args.log_frequency + epoch * len(text_loader) // args.log_frequency
             writer.add_scalar('Batch loss', loss / args.batch_size, step)
     if args.evaluation:
-        evaluation(args, writer, model, device, text_loader, epoch)
+        if args.dataset =="wiki_dump/":
+            evaluation(args, writer, model, device, text_loader, dataset_order)
+        else:
+            evaluation(args, writer, model, device, text_loader, epoch)
     return monitor_loss
 
 def evaluation(args, writer, model, device, text_loader, k):
@@ -107,13 +110,16 @@ def train(args):
             model_name = '/model' + '_' + f'{args.load_file}' + '.pt'
         else:
             model_name = '/model_best.pt'
-        model.load_state_dict(torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage))
+        checkpoint = torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage)
+        args.dataset_order += checkpoint['dataset_order']
+        model.load_state_dict(checkpoint['model_state_dict'])
         args.timestamp = args.load_model_code[:12]
         print('Model loaded')
     writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)
     train_loss = 0
     for epoch in range(args.epochs):
         dataset_order = 0
+        dataset_order += args.dataset_order
         total_dataset_num = 0
         monitor_loss = 0
         if args.dataset=="wiki_dump/":
@@ -134,7 +140,8 @@ def train(args):
                     monitor_loss/ total_dataset_num,
                     time.time() - start_time))
                     if k % args.save_frequency ==0:
-                        torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +f'model_{dataset_dir}_{k+args.dataset_order}.pt')
+                        checkpoint = {'dataset_order':dataset_order, 'model_state_dict':model.state_dict()}
+                        torch.save(checkpoint, args.log_dir + args.timestamp + '_' + args.config + '/' +f'model_{dataset_dir}_{k+args.dataset_order}.pt')
                         print("Model saved")
                     if train_loss > monitor_loss/total_dataset_num:
                         torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')

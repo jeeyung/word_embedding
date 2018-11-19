@@ -27,6 +27,7 @@ class generator(nn.Module):
         unsort_idx = np.argsort(sort_idx)[::-1]
         x_ordered = torch.from_numpy(x_ordered.copy()).to(self.device)
         sort_idx= torch.from_numpy(sort_idx.copy()).to(self.device)
+        # sort_idx= torch.from_numpy(sort_idx.copy())
         unsort_idx = torch.from_numpy(unsort_idx.copy()).to(self.device)
         x = x.index_select(0, sort_idx)
         return x, unsort_idx, x_ordered
@@ -70,6 +71,9 @@ class skipgram(nn.Module):
         context = self.context_embedding(context)
         ns = self.context_embedding(ns) #[32,5,128]
         return -self.pos_loss(center, context) + -self.neg_loss(center, ns)
+    
+    def get_center_embedding(self, center):
+        return self.center_embedding(center)
 
 class word_embed_ng(nn.Module):
     def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, fc_hidden, embed_size, k, bidirectional, multigpu, device, models):
@@ -113,6 +117,15 @@ class word_embed_ng(nn.Module):
         neg_output_tensor = torch.stack(neg_output)
         loss = self.cal_loss(prediction, target, neg_output_tensor)
         return loss
+    
+    def get_center_embedding(self, center, center_len):
+        if self.models == 'tanh':
+            embedding = self.tanh(self.mlp_center(self.center_generator(center, center_len)))
+        elif self.models == 'linear':
+            embedding = self.mlp_center(self.center_generator(center, center_len))
+        else:
+            embedding = self.last_fc_cen(self.tanh(self.mlp_center(self.center_generator(center, center_len))))
+        return embedding
 
 if __name__=='__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')

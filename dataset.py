@@ -18,7 +18,7 @@ from collections import Counter
 from functools import wraps
 import time
 import random
-# from sklearn.externals import joblib
+import csv
 
 def timefn(fn):
     def wrap(*args):
@@ -52,7 +52,7 @@ class TextDataset(Dataset):
             else:
                 # self.word_pairs, self.vocabs, self.word2idx, self.idx2word = joblib.load(f)
                 self.word_pairs, self.neg_samples, self.vocabs, self.word2idx, self.idx2word = pkl.load(f)
-    
+        
     def open_file(self):
         if self.dataset_dir.endswith(".bz2"):
             text = bz2.BZ2File(self.dataset_dir).read().decode("utf-8").lower().strip()

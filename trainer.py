@@ -15,6 +15,7 @@ import math
 from evaluate import evaluate
 from torch.optim.lr_scheduler import StepLR
 from utils import result2dict
+import csv
 
 def train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, writer, text_loader, dataset_order, total_dataset_num):
     scheduler.step()
@@ -51,6 +52,7 @@ def train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, 
             else:
                 step = i // args.log_frequency + epoch * len(text_loader) // args.log_frequency
             writer.add_scalar('Batch loss', loss / args.batch_size, step)
+            # plot_embedding(args, model, text_loader, writer, device)
     if args.evaluation:
         if args.dataset =="wiki_dump/":
             evaluation(args, writer, model, device, text_loader, dataset_order)
@@ -72,14 +74,31 @@ def evaluation(args, writer, model, device, text_loader, k):
     writer.add_scalars('Analogy score', ana_score, k)
     writer.add_scalars('Analogy known', ana_known, k)
 
+def plot_embedding(args, model, text_loader, device, epoch, writer):
+    writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config + '/' + str(epoch))
+    vocabs = text_loader.dataset.vocabs
+    if args.model_name == 'sgns':
+        tokenized = [text_loader.dataset.word2idx[vocab] for vocab in vocabs]
+        tokenized= torch.LongTensor(tokenized)
+        features = model.get_center_embedding(tokenized.to(device))
+    else:
+        tokenized = [[text_loader.dataset.char2idx[character] for character in vocab] for vocab in vocabs]
+        tokenized.sort(key=lambda x: len(x), reverse=True)
+        token_lengths = list(map(len, tokenized))
+        token_tensor = torch.zeros(len(tokenized), max(token_lengths), dtype=torch.long)
+        for idx, (token, tokenlen) in enumerate(zip(tokenized, token_lengths)):
+            token_tensor[idx, :tokenlen] = torch.LongTensor(token)
+        features = model.get_center_embedding(token_tensor.to(device), token_lengths)
+    writer.add_embedding(features, metadata=vocabs)
+    print("plot embedding")
 
 def train(args):
     device = args.device
-    if args.is_character:
-        args.model_name = "cha-level"
     if args.dataset == "wiki_dump/":
         if args.dataset_f_name == "B":
             datasetlist_dir = ["B","C","D","E","F","G","H","I","J","K","L"] 
+        elif args.dataset_f_name == "C":
+            datasetlist_dir = ["C","D","E","F","G","H","I","J","K","L"] 
         else:
             datasetlist_dir = ["A","B","C","D","E","F","G","H","I","J","K","L"] 
         if args.model_name == 'sgns':
@@ -106,10 +125,11 @@ def train(args):
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = StepLR(optimizer, step_size=10, gamma=0.9)
     if args.load_model_code is not None:
-        if args.load_file is not None:
-            model_name = '/model' + '_' + f'{args.load_file}' + '.pt'
-        else:
+        if args.load_best_model:
             model_name = '/model_best.pt'
+        else:
+            model_name = '/model.pt'
+        # model.load_state_dict(torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage))  
         checkpoint = torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage)
         args.dataset_order += checkpoint['dataset_order']
         model.load_state_dict(checkpoint['model_state_dict'])
@@ -125,6 +145,8 @@ def train(args):
         if args.dataset=="wiki_dump/":
             for dataset_dir in datasetlist_dir:
                 for k in range(100):
+                    if k >= 100:
+                        break
                     start_time = time.time()
                     wiki_datadir = args.dataset + dataset_dir
                     dataset = os.path.join(wiki_datadir, 'wiki_{0:02d}.bz2'.format(k+args.dataset_order))
@@ -139,10 +161,9 @@ def train(args):
                     dataset_order,
                     monitor_loss/ total_dataset_num,
                     time.time() - start_time))
-                    if k % args.save_frequency ==0:
-                        checkpoint = {'dataset_order':dataset_order, 'model_state_dict':model.state_dict()}
-                        torch.save(checkpoint, args.log_dir + args.timestamp + '_' + args.config + '/' +f'model_{dataset_dir}_{k+args.dataset_order}.pt')
-                        print("Model saved")
+                    checkpoint = {'dataset_order':dataset_order, 'model_state_dict':model.state_dict()}
+                    torch.save(checkpoint, args.log_dir + args.timestamp + '_' + args.config + '/' +'model.pt')
+                    print("Model saved")
                     if train_loss > monitor_loss/total_dataset_num:
                         torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')
                         print("Model saved")
@@ -157,9 +178,9 @@ def train(args):
                                             writer, text_loader, dataset_order, total_dataset_num)
             print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
                  (epoch), monitor_loss/ len(text_loader.dataset), time.time() - start_time))
-            if epoch % args.save_frequency ==0:
-                torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +f'model_{epoch+1}.pt')
-                print("Model saved")
+            plot_embedding(args, model, text_loader, device, epoch, writer)
+            torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +'model.pt')
+            print("Model saved")
             if train_loss > monitor_loss:
                 torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')
                 print("Best model saved")

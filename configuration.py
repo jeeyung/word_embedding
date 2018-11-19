@@ -11,7 +11,7 @@ def get_config():
 
     model_arg = parser.add_argument_group('Model')
     model_arg.add_argument('--model-name', default='sgns', type=str)
-    model_arg.add_argument('--model-category', type=str, required=True)
+    model_arg.add_argument('--model-category', default=None, type=str)
     model_arg.add_argument('--embed-size', default=300, type=int)
     model_arg.add_argument('--char-embed-size', default=128, type=int)
     model_arg.add_argument('--vocab-size', default=27, type=int)
@@ -26,7 +26,7 @@ def get_config():
     # data_arg.add_argument('--data-dir', default='/data/jeeyung', type=str, help='directory of training/testing data (default: datasets)')
     data_arg.add_argument('--dataset', default='toy/merge.txt', type=str)
     # data_arg.add_argument('--dataset', default='wiki_dump/', type=str)
-    data_arg.add_argument('--dataset_f_name', default=None, type=str)
+    data_arg.add_argument('--dataset-f-name', default=None, type=str)
     data_arg.add_argument('--window-size', default=5, type=int)
     data_arg.add_argument('--neg-sample-size', default=7, type=int)
     data_arg.add_argument('--is-character', action='store_true')
@@ -45,7 +45,7 @@ def get_config():
     train_arg.add_argument('--timestamp', default=datetime.now().strftime("%y%m%d%H%M%S"), type=str)
     train_arg.add_argument('--load-model', default=None, type=str)
     train_arg.add_argument('--load-model-code', default=None, type=str)
-    train_arg.add_argument('--load-file', default=None, type=str)
+    train_arg.add_argument('--load-best-model', action='store_true')
     train_arg.add_argument('--log-dir', default='saved/runs/', type=str)
     train_arg.add_argument('--multigpu', action='store_true')
 
@@ -58,6 +58,10 @@ def get_config():
 
     args = parser.parse_args()
     args.device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
+    if args.is_character:
+        args.model_name = 'lstm'
+    if args.is_character and args.model_category is None:
+        parser.error('model category is required when is-character is True')
     config_list = [args.model_name, args.embed_size, args.hidden_size,\
                    args.dataset, args.window_size, args.neg_sample_size, args.is_character,\
                    args.device, args.batch_size, args.epochs, args.lr, args.bidirectional, args.num_layer, args.model_category, args.memo]

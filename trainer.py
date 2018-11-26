@@ -179,6 +179,8 @@ def train(args):
         dataset_order += args.dataset_order
         total_dataset_num = 0
         monitor_loss = 0
+        trainer = Trainer(args, model, device, epoch, monitor_loss, optimizer, scheduler, writer,
+                                                    text_loader, dataset_order, total_dataset_num)
         if args.dataset=="wiki_dump/":
             for dataset_dir in datasetlist_dir:
                 for k in range(100):
@@ -190,8 +192,9 @@ def train(args):
                     text_loader = TextDataLoader(args.data_dir, dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                             args.is_character, args.num_workers, args.remove_th, args.subsample_th)
                     print("made text loader")
-                    monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, writer,
-                                                    text_loader, dataset_order, total_dataset_num)
+                    # monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, writer,
+                                                    # text_loader, dataset_order, total_dataset_num)
+                    monitor_loss = trainer.train_epoch()
                     dataset_order += 1
                     total_dataset_num += len(text_loader.dataset)
                     print('====> Dataset: {} Average loss: {:.4f} / Time: {:.4f}'.format(
@@ -211,8 +214,9 @@ def train(args):
         else:
             monitor_loss = 0
             start_time = time.time()
-            monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler,
-                                            writer, text_loader, dataset_order, total_dataset_num)
+            monitor_loss = trainer.train_epoch()
+            # monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler,
+                                            # writer, text_loader, dataset_order, total_dataset_num)
             print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
                  (epoch), monitor_loss/ len(text_loader.dataset), time.time() - start_time))
             if epoch % 10 ==0 :

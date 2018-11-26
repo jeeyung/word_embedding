@@ -38,7 +38,7 @@ class Trainer(object):
         world_size = distributed.get_world_size()
         for p in self.model.parameters():
             group = distributed.new_group(ranks=list(range(world_size)))
-            tensor = p.grad.data.cpu()
+            tensor = p.grad.data
             distributed.all_reduce(
                 tensor, op=distributed.reduce_op.SUM, group=group)
             tensor /= float(world_size)

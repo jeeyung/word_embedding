@@ -67,6 +67,7 @@ class Trainer(object):
             loss.backward()
             if not self.args.model_name == 'sgns':
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.clip)
+            self.average_gradients()
             self.optimizer.step()
             self.monitor_loss += loss.item()
             if i % self.args.log_frequency == 0:

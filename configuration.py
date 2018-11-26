@@ -55,7 +55,11 @@ def get_config():
     # test_arg = parser.add_argument_group('Test')
     # test_arg.add_argument('--load-model', action='store_true', default = False)
     train_arg.add_argument('--memo', default='', type=str)
-
+    train_arg.add_argument('--backend', default='nccl', type=str)
+    train_arg.add_argument('--init-method', default='nccl://127.0.0.1:22', type=str)
+    train_arg.add_argument('--rank', type=int)
+    train_arg.add_argument('--world-size', type=int)
+    
     args = parser.parse_args()
     args.device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     if args.is_character:

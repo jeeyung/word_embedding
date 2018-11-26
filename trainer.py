@@ -16,6 +16,8 @@ from evaluate import evaluate
 from torch.optim.lr_scheduler import StepLR
 from utils import result2dict
 import csv
+from torch import distributed, nn
+from torch.utils.data.distributed import DistributedSampler
 
 def train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, writer, text_loader, dataset_order, total_dataset_num):
     scheduler.step()
@@ -92,7 +94,15 @@ def plot_embedding(args, model, text_loader, device, epoch, writer):
     writer.add_embedding(features, metadata=vocabs)
     print("plot embedding")
 
+def init_process(args):
+    distributed.init_process_group(
+        backend=args.backend,
+        init_method=args.init_method,
+        rank=args.rank,
+        world_size=args.world_size
+    )
 def train(args):
+    init_process(args)
     device = args.device
     if args.dataset == "wiki_dump/":
         if args.dataset_f_name == "B":
@@ -178,7 +188,8 @@ def train(args):
                                             writer, text_loader, dataset_order, total_dataset_num)
             print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
                  (epoch), monitor_loss/ len(text_loader.dataset), time.time() - start_time))
-            plot_embedding(args, model, text_loader, device, epoch, writer)
+            if epoch % 10 ==0 :
+                plot_embedding(args, model, text_loader, device, epoch, writer)
             torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +'model.pt')
             print("Model saved")
             if train_loss > monitor_loss:

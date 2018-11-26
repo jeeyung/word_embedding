@@ -19,48 +19,73 @@ import csv
 from torch import distributed, nn
 from torch.utils.data.distributed import DistributedSampler
 
-def train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, writer, text_loader, dataset_order, total_dataset_num):
-    scheduler.step()
-    for i, (center,context, neg) in enumerate(text_loader):
-        if args.is_character:
-            center, center_len = center
-            context, context_len = context
-            center = center.to(device)
-            context = context.to(device)
-            n=[]
-            for k in range(args.neg_sample_size):
-                padded_neg, neg_len = neg[k]
-                n.append((padded_neg.to(device), neg_len))
-            optimizer.zero_grad()
-            loss = model(center, center_len, context, context_len, n)
-        else:
-            center = center.to(device)
-            context = context.to(device)
-            neg = neg.to(device)
-            optimizer.zero_grad()
-            loss = model(center, context, neg)
-        loss.backward()
-        if not args.model_name == 'sgns':
-            torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-        optimizer.step()
-        monitor_loss += loss.item()
-        if i % args.log_frequency == 0:
-            print('Train dataset: {} [{}/{} ({:.0f}%)] Loss: {:.8f}'.format(
-                (dataset_order), i* args.batch_size, len(text_loader.dataset),
-                100. * i / len(text_loader),
-                loss/args.batch_size))
-            if args.dataset == "wiki_dump/":
-                step = i // args.log_frequency + math.ceil(total_dataset_num // args.batch_size // args.log_frequency)
+class Trainer(object):
+    def __init__(self, args, model, device, epoch, monitor_loss, optimizer, 
+                        scheduler, writer, text_loader, dataset_order, total_dataset_num): 
+        self.args = args
+        self.model = model
+        self.device = device
+        self.epoch = epoch
+        self.monitor_loss = monitor_loss
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+        self.writer = writer
+        self.text_loader = text_loader
+        self.dataset_order = dataset_order
+        self.total_dataset_num = total_dataset_num
+        
+    def average_gradients(self):
+        world_size = distributed.get_world_size()
+        for p in self.model.parameters():
+            group = distributed.new_group(ranks=list(range(world_size)))
+            tensor = p.grad.data.cpu()
+            distributed.all_reduce(
+                tensor, op=distributed.reduce_op.SUM, group=group)
+            tensor /= float(world_size)
+            p.grad.data = tensor.to(args.device)
+
+    def train_epoch(self):
+        self.scheduler.step()
+        for i, (center,context, neg) in enumerate(self.text_loader):
+            if self.args.is_character:
+                center, center_len = center
+                context, context_len = context
+                center = center.to(device)
+                context = context.to(device)
+                n=[]
+                for k in range(self.args.neg_sample_size):
+                    padded_neg, neg_len = neg[k]
+                    n.append((padded_neg.to(device), neg_len))
+                self.optimizer.zero_grad()
+                loss = self.model(center, center_len, context, context_len, n)
             else:
-                step = i // args.log_frequency + epoch * len(text_loader) // args.log_frequency
-            writer.add_scalar('Batch loss', loss / args.batch_size, step)
-            # plot_embedding(args, model, text_loader, writer, device)
-    if args.evaluation:
-        if args.dataset =="wiki_dump/":
-            evaluation(args, writer, model, device, text_loader, dataset_order)
-        else:
-            evaluation(args, writer, model, device, text_loader, epoch)
-    return monitor_loss
+                center = center.to(device)
+                context = context.to(device)
+                neg = neg.to(device)
+                self.optimizer.zero_grad()
+                loss = self.model(center, context, neg)
+            loss.backward()
+            if not self.args.model_name == 'sgns':
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.clip)
+            self.optimizer.step()
+            self.monitor_loss += loss.item()
+            if i % self.args.log_frequency == 0:
+                print('Train dataset: {} [{}/{} ({:.0f}%)] Loss: {:.8f}'.format(
+                    (self.dataset_order), i* self.args.batch_size, len(self.text_loader.dataset),
+                    100. * i / len(self.text_loader),
+                    loss/self.args.batch_size))
+                if self.args.dataset == "wiki_dump/":
+                    step = i // self.args.log_frequency + math.ceil(self.total_dataset_num // self.args.batch_size // self.args.log_frequency)
+                else:
+                    step = i // self.args.log_frequency + self.epoch * len(text_loader) // self.args.log_frequency
+                self.writer.add_scalar('Batch loss', loss / self.args.batch_size, step)
+                # plot_embedding(args, model, text_loader, writer, device)
+        if self.args.evaluation:
+            if self.args.dataset =="wiki_dump/":
+                evaluation(self.args, self.writer, model, device, text_loader, self.dataset_order)
+            else:
+                evaluation(self.args, self.writer, model, device, text_loader, self.epoch)
+        return self.monitor_loss
 
 def evaluation(args, writer, model, device, text_loader, k):
     if args.model_name == "sgns":
@@ -101,6 +126,8 @@ def init_process(args):
         rank=args.rank,
         world_size=args.world_size
     )
+
+        
 def train(args):
     init_process(args)
     device = args.device

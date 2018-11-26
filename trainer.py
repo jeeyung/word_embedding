@@ -42,7 +42,7 @@ class Trainer(object):
             distributed.all_reduce(
                 tensor, op=distributed.reduce_op.SUM, group=group)
             tensor /= float(world_size)
-            p.grad.data = tensor.to(args.device)
+            p.grad.data = tensor.to(self.args.device)
 
     def train_epoch(self):
         self.scheduler.step()
@@ -77,7 +77,7 @@ class Trainer(object):
                 if self.args.dataset == "wiki_dump/":
                     step = i // self.args.log_frequency + math.ceil(self.total_dataset_num // self.args.batch_size // self.args.log_frequency)
                 else:
-                    step = i // self.args.log_frequency + self.epoch * len(text_loader) // self.args.log_frequency
+                    step = i // self.args.log_frequency + self.epoch * len(self.text_loader) // self.args.log_frequency
                 self.writer.add_scalar('Batch loss', loss / self.args.batch_size, step)
                 # plot_embedding(args, model, text_loader, writer, device)
         if self.args.evaluation:

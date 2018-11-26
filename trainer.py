@@ -38,11 +38,12 @@ class Trainer(object):
         world_size = distributed.get_world_size()
         for p in self.model.parameters():
             group = distributed.new_group(ranks=list(range(world_size)))
-            tensor = p.grad.data
-            distributed.all_reduce(
-                tensor, op=distributed.reduce_op.SUM, group=group)
-            tensor /= float(world_size)
-            p.grad.data = tensor.to(self.args.device)
+            if p.grad is not None:
+                tensor = p.grad
+                distributed.all_reduce(
+                    tensor, op=distributed.reduce_op.SUM, group=group)
+                tensor /= float(world_size)
+                p.grad.data = tensor.to(self.args.device)
 
     def train_epoch(self):
         self.scheduler.step()
@@ -67,7 +68,8 @@ class Trainer(object):
             loss.backward()
             if not self.args.model_name == 'sgns':
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.clip)
-            self.average_gradients()
+            if self.args.multi_node:            
+                self.average_gradients()
             self.optimizer.step()
             self.monitor_loss += loss.item()
             if i % self.args.log_frequency == 0:
@@ -127,10 +129,10 @@ def init_process(args):
         rank=args.rank,
         world_size=args.world_size
     )
-
         
 def train(args):
-    init_process(args)
+    if args.multi_node:
+        init_process(args)
     device = args.device
     if args.dataset == "wiki_dump/":
         if args.dataset_f_name == "B":

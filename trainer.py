@@ -39,12 +39,13 @@ class Trainer(object):
         for p in self.model.parameters():
             group = distributed.new_group(ranks=list(range(world_size)))
             if p.grad is not None:
-                tensor = p.grad.data.cpu()
+                tensor = p.grad.data
                 distributed.all_reduce(
                     tensor, op=distributed.reduce_op.SUM, group=group)
                 tensor /= float(world_size)
                 p.grad.data = tensor.to(self.args.device)
-
+            else:continue
+                
     def train_epoch(self):
         self.scheduler.step()
         for i, (center,context, neg) in enumerate(self.text_loader):

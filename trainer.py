@@ -20,8 +20,8 @@ from torch import distributed, nn
 from torch.utils.data.distributed import DistributedSampler
 
 class Trainer(object):
-    def __init__(self, args, model, device, epoch, monitor_loss, optimizer, 
-                        scheduler, writer, text_loader, dataset_order, total_dataset_num): 
+    def __init__(self, args, model, device, optimizer, 
+                        scheduler, writer, text_loader, epoch, monitor_loss, dataset_order, total_dataset_num): 
         self.args = args
         self.model = model
         self.device = device
@@ -45,7 +45,7 @@ class Trainer(object):
                 tensor /= float(world_size)
                 p.grad.data = tensor.to(self.args.device)
             else:continue
-                
+
     def train_epoch(self):
         self.scheduler.step()
         for i, (center,context, neg) in enumerate(self.text_loader):
@@ -181,14 +181,14 @@ def train(args):
         print('Model loaded')
     writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)
     train_loss = 0
+    trainer = Trainer(args, model, device, optimizer, scheduler, writer,
+                                text_loader, epoch=0, monitor_loss=0, dataset_order=0, total_dataset_num=0)
     for epoch in range(args.epochs):
-        dataset_order = 0
-        dataset_order += args.dataset_order
-        total_dataset_num = 0
-        monitor_loss = 0
-        trainer = Trainer(args, model, device, epoch, monitor_loss, optimizer, scheduler, writer,
-                                                    text_loader, dataset_order, total_dataset_num)
+        trainer.monitor_loss = 0
+        trainer.epoch=epoch
         if args.dataset=="wiki_dump/":
+            if epoch == 0 and args.dataset != 0:
+                trainer.dataset_order += args.dataset_order
             for dataset_dir in datasetlist_dir:
                 for k in range(100):
                     if k >= 100:
@@ -199,31 +199,26 @@ def train(args):
                     text_loader = TextDataLoader(args.data_dir, dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                             args.is_character, args.num_workers, args.remove_th, args.subsample_th)
                     print("made text loader")
-                    # monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler, writer,
-                                                    # text_loader, dataset_order, total_dataset_num)
                     monitor_loss = trainer.train_epoch()
-                    dataset_order += 1
-                    total_dataset_num += len(text_loader.dataset)
+                    trainer.dataset_order += 1
+                    trainer.total_dataset_num += len(text_loader.dataset)
                     print('====> Dataset: {} Average loss: {:.4f} / Time: {:.4f}'.format(
-                    dataset_order,
-                    monitor_loss/ total_dataset_num,
+                    trainer.dataset_order,
+                    monitor_loss/ trainer.total_dataset_num,
                     time.time() - start_time))
-                    checkpoint = {'dataset_order':dataset_order, 'model_state_dict':model.state_dict()}
+                    checkpoint = {'dataset_order':trainer.dataset_order, 'model_state_dict':model.state_dict()}
                     torch.save(checkpoint, args.log_dir + args.timestamp + '_' + args.config + '/' +'model.pt')
                     print("Model saved")
-                    if train_loss > monitor_loss/total_dataset_num:
+                    if train_loss > monitor_loss/trainer.total_dataset_num:
                         torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')
                         print("Model saved")
-                    train_loss = monitor_loss/total_dataset_num
-                    writer.add_scalar('Train loss', monitor_loss/total_dataset_num, dataset_order)
+                    train_loss = monitor_loss/trainer.total_dataset_num
+                    writer.add_scalar('Train loss', monitor_loss/trainer.total_dataset_num, trainer.dataset_order)
                     writer.add_scalar('Epoch time', time.time() - start_time, k)
                     del text_loader
         else:
-            monitor_loss = 0
             start_time = time.time()
             monitor_loss = trainer.train_epoch()
-            # monitor_loss = train_epoch(args, model, device, epoch, monitor_loss, optimizer, scheduler,
-                                            # writer, text_loader, dataset_order, total_dataset_num)
             print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
                  (epoch), monitor_loss/ len(text_loader.dataset), time.time() - start_time))
             if epoch % 10 ==0 :

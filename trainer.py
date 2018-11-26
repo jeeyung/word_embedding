@@ -39,7 +39,7 @@ class Trainer(object):
         for p in self.model.parameters():
             group = distributed.new_group(ranks=list(range(world_size)))
             if p.grad is not None:
-                tensor = p.grad
+                tensor = p.grad.data
                 distributed.all_reduce(
                     tensor, op=distributed.reduce_op.SUM, group=group)
                 tensor /= float(world_size)
@@ -92,11 +92,11 @@ class Trainer(object):
 
 def evaluation(args, writer, model, device, text_loader, k):
     if args.model_name == "sgns":
-        sim_results = evaluate(model, device, True, text_loader.dataset.word2idx)
-        ana_results = evaluate(model, device, False, text_loader.dataset.word2idx)
+        sim_results = evaluate(model.eval(), device, True, text_loader.dataset.word2idx)
+        ana_results = evaluate(model.eval(), device, False, text_loader.dataset.word2idx)
     else:
-        sim_results = evaluate(model, device, True)
-        ana_results = evaluate(model, device, False)
+        sim_results = evaluate(model.eval(), device, True)
+        ana_results = evaluate(model.eval(), device, False)
     sim_score, sim_known = result2dict(sim_results)
     ana_score, ana_known = result2dict(ana_results)
     writer.add_scalars('Similarity score', sim_score, k)

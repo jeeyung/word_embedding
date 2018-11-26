@@ -54,7 +54,7 @@ def get_config():
     train_arg.add_argument('--num-workers', default=0, type=int)
     # test_arg = parser.add_argument_group('Test')
     # test_arg.add_argument('--load-model', action='store_true', default = False)
-    train_arg.add_argument('--multi-node', action='stroe_true')
+    train_arg.add_argument('--multi-node', action='store_true')
     train_arg.add_argument('--memo', default='', type=str)
     train_arg.add_argument('--backend', default='nccl', type=str)
     train_arg.add_argument('--init-method', default='nccl://127.0.0.1:22', type=str)

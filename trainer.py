@@ -39,7 +39,7 @@ class Trainer(object):
         for p in self.model.parameters():
             group = distributed.new_group(ranks=list(range(world_size)))
             if p.grad is not None:
-                tensor = p.grad.data
+                tensor = p.grad.data.cpu()
                 distributed.all_reduce(
                     tensor, op=distributed.reduce_op.SUM, group=group)
                 tensor /= float(world_size)
@@ -70,6 +70,7 @@ class Trainer(object):
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.clip)
             if self.args.multi_node:            
                 self.average_gradients()
+                print('average gradient')
             self.optimizer.step()
             self.monitor_loss += loss.item()
             if i % self.args.log_frequency == 0:
@@ -123,6 +124,8 @@ def plot_embedding(args, model, text_loader, device, epoch, writer):
     print("plot embedding")
 
 def init_process(args):
+    os.environ['MASTER_ADDR'] = 'deepspark.snu.ac.kr'
+    os.environ['MASTER_PORT'] = '19261'
     distributed.init_process_group(
         backend=args.backend,
         init_method=args.init_method,

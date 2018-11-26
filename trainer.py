@@ -50,18 +50,18 @@ class Trainer(object):
             if self.args.is_character:
                 center, center_len = center
                 context, context_len = context
-                center = center.to(device)
-                context = context.to(device)
+                center = center.to(self.device)
+                context = context.to(self.device)
                 n=[]
                 for k in range(self.args.neg_sample_size):
                     padded_neg, neg_len = neg[k]
-                    n.append((padded_neg.to(device), neg_len))
+                    n.append((padded_neg.to(self.device), neg_len))
                 self.optimizer.zero_grad()
                 loss = self.model(center, center_len, context, context_len, n)
             else:
-                center = center.to(device)
-                context = context.to(device)
-                neg = neg.to(device)
+                center = center.to(self.device)
+                context = context.to(self.device)
+                neg = neg.to(self.device)
                 self.optimizer.zero_grad()
                 loss = self.model(center, context, neg)
             loss.backward()
@@ -82,9 +82,9 @@ class Trainer(object):
                 # plot_embedding(args, model, text_loader, writer, device)
         if self.args.evaluation:
             if self.args.dataset =="wiki_dump/":
-                evaluation(self.args, self.writer, model, device, text_loader, self.dataset_order)
+                evaluation(self.args, self.writer, self.model, self.device, self.text_loader, self.dataset_order)
             else:
-                evaluation(self.args, self.writer, model, device, text_loader, self.epoch)
+                evaluation(self.args, self.writer, self.model, self.device, self.text_loader, self.epoch)
         return self.monitor_loss
 
 def evaluation(args, writer, model, device, text_loader, k):

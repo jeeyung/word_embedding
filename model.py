@@ -127,6 +127,31 @@ class word_embed_ng(nn.Module):
             embedding = self.last_fc_cen(self.tanh(self.mlp_center(self.center_generator(center, center_len))))
         return embedding
 
+class pretrained(nn.Module):
+    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, fc_hidden, embed_size, k, bidirectional, multigpu, device, models):
+        super(pretrained, self).__init__()
+        self.embedding_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
+        self.mlp = nn.Linear(hidden_size, fc_hidden)
+        self.tanh = nn.Tanh()
+        self.last_fc = nn.Linear(fc_hidden, embed_size)
+
+    def cal_loss(self, predicted, target):
+        loss = nn.MSELoss()
+        return loss(predicted, target)
+
+    def forward(self, word, word_len, true_embedding):
+        if self.models == 'tanh':
+            predicted_embedding = self.tanh(self.mlp(self.embedding_generator(word, word_len)))
+        elif self.models == 'linear':
+            predicted_embedding = self.mlp(self.embedding_generator(word, word_len))
+        else:
+            predicted_embedding = self.last_fc(self.tanh(self.mlp(self.embedding_generator(word, word_len))))
+
+        loss = self.cal_loss(predicted_embedding, true_embedding)
+        return loss
+
+
+
 if __name__=='__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = word_embed_ng(26, 10, 10, 1, 0.3, 10, 5, False, True, device)

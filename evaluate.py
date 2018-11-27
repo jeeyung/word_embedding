@@ -9,7 +9,7 @@ from evaluation.evaluate import evaluate_similarity, evaluate_analogy
 from model import *
 from dataloader import *
 
-def character_embedding(model, device, data_dir='./data', batch_size=2): # 여기
+def character_embedding(model, device, data_dir='./data', batch_size=2):
     test_loader = TestDataLoader(data_dir, batch_size)
     embeddings = []
     for words, length in test_loader:

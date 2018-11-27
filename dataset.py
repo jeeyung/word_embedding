@@ -19,6 +19,7 @@ from functools import wraps
 import time
 import random
 import csv
+import gensim.models.keyedvectors as word2vec
 
 def timefn(fn):
     def wrap(*args):
@@ -202,6 +203,54 @@ class TextDataset(Dataset):
 
     def __len__(self):
         return len(self.word_pairs)
+
+
+class PretrainedDataset(Dataset):
+    def __init__(self, data_dir):
+        self.dataset_dir = os.path.join(data_dir, "GoogleNews-vectors-negative300.bin")
+        if self.is_data_exist():
+            self.make_data(self.dataset_dir)
+
+    def make_data(self, path):
+        model = word2vec.KeyedVectors.load_word2vec_format(path, binary=True)
+        self.idx2word = model.index2word
+        self.word2idx = {word: idx for idx, word in self.index2word.items()}
+        weights = torch.FloatTensor(model.wv.vectors)
+        self.embeddings = torch.nn.Embedding._from_pretrained(weights)
+
+        self.vocab = self.word2idx.keys()
+        self.char2idx, self.idx2char = map_char_idx()
+
+    def is_data_exist(self):
+        if os.path.isfile(self.file_dir):
+            print("Pretrained {} exist".format(self.file_dir))
+            return True
+        else:
+            raise FileNotFoundError("Pretrained {} does not exist".format(self.file_dir))
+
+    @staticmethod
+    def map_char_idx():
+        alphabet = 'abcdefghijklmnopqrstuvwxyz'
+        char2idx = {}
+        idx2char = {}
+        for i in range(len(alphabet)):
+            char2idx[list(alphabet)[i]] = i+1
+            idx2char[i+1] = list(alphabet)[i]
+        return char2idx, idx2char
+
+    def make_chars(self, word):
+        word2char_idx = [self.char2idx[char] for char in list(word)]
+        return word2char_idx
+
+    def __getitem__(self, idx):
+        word = self.idx2word[idx]
+        char_word = self.make_chars(word)
+        embedding = self.embeddings(torch.LongTensor([idx]))
+        return char_word, embedding
+
+    def __len__(self):
+        return len(self.vocab)
+
 
 class TestDataset(Dataset):
     def __init__(self, data_dir):

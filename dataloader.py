@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from torch.nn.utils.rnn import pack_sequence, pad_sequence
 from torch.utils.data import DataLoader
-from dataset import TextDataset, TestDataset
+from dataset import TextDataset, TestDataset, PretrainedDataset
 
 # device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 def collate_text(list_inputs):
@@ -34,6 +34,19 @@ def collate_word(words):
     padded_words = pad_sequence(words).transpose(0,1)
     return padded_words, length_list
 
+def collate_pretrained(list_inputs):
+    batch = len(list_inputs)
+    words = [input[0] for input in list_inputs]
+    words_len = [len(word) for word in words]
+    embeddings = torch.cat([input[1].unsqueeze(0) for input in list_inputs], 0)
+    max_len = max(words_len)
+    padded_words = torch.zeros(batch, max_len, dtype=torch.long)
+    for i in range(batch):
+        padded_words[i, :words_len[i]] = words[i]
+    return padded_words, words_len, embeddings
+
+
+
 class TextDataLoader(DataLoader):
     def __init__(self, data_dir, dataset, batch_size, window_size, ns_size, is_character, num_workers, remove_th, subsample_th):
         self.dataset = TextDataset(data_dir, dataset, window_size, ns_size, remove_th, subsample_th, is_character)
@@ -46,6 +59,12 @@ class TestDataLoader(DataLoader):
     def __init__(self, data_dir, batch_size):
         self.dataset = TestDataset(data_dir)
         super(TestDataLoader, self).__init__(self.dataset, batch_size, collate_fn=collate_word)
+
+class PretrainedDataLoader(DataLoader):
+    def __init__(self, data_dir, batch_size):
+        self.dataset = PretrainedDataset(data_dir)
+        super(PretrainedDataLoader, self).__init__(self.dataset, batch_size, collate_fn=collate_pretrained)
+
 
 if __name__ == '__main__':
     # is_character = False

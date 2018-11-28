@@ -18,6 +18,7 @@ from utils import result2dict
 import csv
 from torch import distributed, nn
 from torch.utils.data.distributed import DistributedSampler
+from random import Random 
 
 class Trainer(object):
     def __init__(self, args, model, device, optimizer, scheduler, writer, text_loader,
@@ -134,7 +135,8 @@ def init_process(args):
         rank=args.rank,
         world_size=args.world_size
     )
-        
+
+
 def train(args):
     if args.multi_node:
         init_process(args)

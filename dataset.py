@@ -17,7 +17,6 @@ import multiprocessing as mp
 from collections import Counter
 from functools import wraps
 import time
-import random
 import csv
 import gensim.models.keyedvectors as word2vec
 
@@ -203,7 +202,6 @@ class TextDataset(Dataset):
 
     def __len__(self):
         return len(self.word_pairs)
-
 
 class PretrainedDataset(Dataset):
     def __init__(self, data_dir):

@@ -4,7 +4,8 @@ import torch
 from torch.nn.utils.rnn import pack_sequence, pad_sequence
 from torch.utils.data import DataLoader
 from dataset import TextDataset, TestDataset, PretrainedDataset
-
+from random import Random
+from torch import distributed, nn
 # device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 def collate_text(list_inputs):
     batch = len(list_inputs)
@@ -45,15 +46,54 @@ def collate_pretrained(list_inputs):
         padded_words[i, :words_len[i]] = words[i]
     return padded_words, words_len, embeddings
 
+class Partition(object):
+    def __init__(self, data, index):
+        self.data = data
+        self.index = index
 
+    def __len__(self):
+        return len(self.index)
+    
+    def __getitem__(self, index):
+        data_idx = self.index[index]
+        return self.data[data_idx]
+
+class DataParitioner(object):
+    def __init__(self, data, sizes, seed=1234):
+        self.data = data
+        self.partitions = []
+        rng = Random()
+        rng.seed(seed)
+        data_len = len(data)
+        indexes = [x for x in range(0, data_len)]
+        rng.shuffle(indexes)
+
+        for frac in sizes:
+            part_len = int(frac * data_len)
+            self.partitions.append(indexes[0:part_len])
+            indexes = indexes[part_len:]
+    
+    def use(self, partition):
+        return Partition(self.data, self.partitions[partition])
 
 class TextDataLoader(DataLoader):
-    def __init__(self, data_dir, dataset, batch_size, window_size, ns_size, is_character, num_workers, remove_th, subsample_th):
+    def __init__(self, data_dir, dataset, batch_size, window_size, ns_size, is_character, num_workers, remove_th, subsample_th, multinode):
         self.dataset = TextDataset(data_dir, dataset, window_size, ns_size, remove_th, subsample_th, is_character)
-        if is_character:
-            super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers, collate_fn=collate_text)
+        if multinode:
+            size = distributed.get_world_size()
+            batch_size_dis = batch_size / float(size)
+            partition_sizes = [1.0 / size for _ in range(size)]
+            partition = DataParitioner(self.dataset, partition_sizes)
+            partition = partition.use(distributed.get_rank())
+            if is_character:
+                super(TextDataLoader, self).__init__(partition, batch_size_dis, num_workers=num_workers, collate_fn=collate_text, shuffle=True)
+            else:
+                super(TextDataLoader, self).__init__(partition, batch_size_dis, num_workers=num_workers, shuffle=True)
         else:
-            super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers)
+            if is_character:
+                super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers, collate_fn=collate_text, shuffle=True)
+            else:
+                super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers, shuffle=True)
 
 class TestDataLoader(DataLoader):
     def __init__(self, data_dir, batch_size):

@@ -211,15 +211,17 @@ class PretrainedDataset(Dataset):
 
     def make_data(self, path):
         model = word2vec.KeyedVectors.load_word2vec_format(path, binary=True)
-        #self.idx2word = model.index2word
-        self.word2idx = {word: idx for idx, word in enumerate(model.wv.index2word)}
-        self.idx2word = {idx: word for idx, word in enumerate(model.wv.index2word)}
+        self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)}
+        self.idx2word = {idx: word for word, idx in self.word2idx.items()}
         weights = torch.FloatTensor(model.wv.vectors)
         self.embeddings = torch.nn.Embedding.from_pretrained(weights)
-
+        self.indices = list(self.idx2word.keys())
         self.vocab = self.word2idx.keys()
         self.char2idx, self.idx2char = self.map_char_idx()
 
+    def preprocess(self, word):
+        word = re.sub(r"[^A-Za-z]+", '', word).lower()
+        return word
 
     def is_data_exist(self):
         if os.path.isfile(self.file_dir):
@@ -238,14 +240,14 @@ class PretrainedDataset(Dataset):
         return char2idx, idx2char
 
     def make_chars(self, word):
-        print([char for char in list(word)])
         word2char_idx = [self.char2idx[char] for char in list(word)]
         return word2char_idx
 
-    def __getitem__(self, idx):
+    def __getitem__(self, i):
+        idx = self.indices[i]
         word = self.idx2word[idx]
-        char_word = self.make_chars(word)
-        embedding = self.embeddings(torch.LongTensor([idx]))
+        char_word = torch.tensor(self.make_chars(word))
+        embedding = torch.tensor(self.embeddings(torch.LongTensor([idx])))
         return char_word, embedding
 
     def __len__(self):

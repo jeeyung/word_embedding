@@ -78,9 +78,9 @@ class Trainer(object):
             self.monitor_loss += loss.item()
             if i % self.args.log_frequency == 0:
                 print('Train dataset: {} [{}/{} ({:.0f}%)] Loss: {:.8f}'.format(
-                    (self.dataset_order), i* self.args.batch_size, len(self.text_loader.dataset),
-                    100. * i / len(self.text_loader),
-                    loss/self.args.batch_size))
+                    (self.dataset_order), i* self.args.batch_size , len(self.text_loader.dataset)/ distributed.get_world_size(),
+                    100. * i / len(self.text_loader)/ distributed.get_world_size(),
+                    loss/self.args.batch_size/distributed.get_world_size()))
                 if self.args.dataset == "wiki_dump/":
                     step = i // self.args.log_frequency + math.ceil(self.total_dataset_num // self.args.batch_size // self.args.log_frequency)
                 else:
@@ -88,7 +88,7 @@ class Trainer(object):
                 self.writer.add_scalar('Batch loss', loss / self.args.batch_size, step)
                 # plot_embedding(args, model, text_loader, writer, device)
         if self.args.evaluation:
-            if self.args.dataset =="wiki_dump/":
+            if self.args.dataset == "wiki_dump/":
                 evaluation(self.args, self.writer, self.model, self.device, self.text_loader, self.dataset_order)
             else:
                 evaluation(self.args, self.writer, self.model, self.device, self.text_loader, self.epoch)

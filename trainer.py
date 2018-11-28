@@ -110,7 +110,7 @@ def evaluation(args, writer, model, device, text_loader, k):
 
 def plot_embedding(args, model, text_loader, device, epoch, writer):
     writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config + '/' + str(epoch))
-    vocabs = text_loader.dataset.vocabs
+    vocabs = text_loader.vocabs
     if args.model_name == 'sgns':
         tokenized = [text_loader.dataset.word2idx[vocab] for vocab in vocabs]
         tokenized= torch.LongTensor(tokenized)
@@ -224,7 +224,7 @@ def train(args):
             monitor_loss = trainer.train_epoch()
             print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
                  (epoch), monitor_loss/ len(text_loader.dataset), time.time() - start_time))
-            if epoch % 10 ==0 :
+            if epoch % 10 ==0 and distributed.get_rank() == 0:
                 plot_embedding(args, model, text_loader, device, epoch, writer)
             torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +'model.pt')
             print("Model saved")

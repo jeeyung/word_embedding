@@ -50,7 +50,7 @@ class Partition(object):
     def __init__(self, data, index):
         self.data = data
         self.index = index
-
+         
     def __len__(self):
         return len(self.index)
     
@@ -79,6 +79,7 @@ class DataParitioner(object):
 class TextDataLoader(DataLoader):
     def __init__(self, data_dir, dataset, batch_size, window_size, ns_size, is_character, num_workers, remove_th, subsample_th, multinode):
         self.dataset = TextDataset(data_dir, dataset, window_size, ns_size, remove_th, subsample_th, is_character)
+        self.vocabs = self.dataset.vocabs
         if multinode:
             size = distributed.get_world_size()
             batch_size = int(batch_size / float(size))

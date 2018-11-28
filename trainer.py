@@ -20,8 +20,8 @@ from torch import distributed, nn
 from torch.utils.data.distributed import DistributedSampler
 
 class Trainer(object):
-    def __init__(self, args, model, device, optimizer, 
-                        scheduler, writer, text_loader, epoch, monitor_loss, dataset_order, total_dataset_num): 
+    def __init__(self, args, model, device, optimizer, scheduler, writer, text_loader,
+                        epoch, monitor_loss, dataset_order, total_dataset_num): 
         self.args = args
         self.model = model
         self.device = device
@@ -33,16 +33,18 @@ class Trainer(object):
         self.text_loader = text_loader
         self.dataset_order = dataset_order
         self.total_dataset_num = total_dataset_num
-        
+        self.multi_node = args.multi_node
+        if self.multi_node:
+            self.world_size = distributed.get_world_size()
+            self.group = distributed.new_group(ranks=list(range(self.world_size)))
+
     def average_gradients(self):
-        world_size = distributed.get_world_size()
         for p in self.model.parameters():
-            group = distributed.new_group(ranks=list(range(world_size)))
             if p.grad is not None:
                 tensor = p.grad.data
                 distributed.all_reduce(
-                    tensor, op=distributed.reduce_op.SUM, group=group)
-                tensor /= float(world_size)
+                    tensor, op=distributed.reduce_op.SUM, group=self.group)
+                tensor /= float(self.world_size)
                 p.grad.data = tensor.to(self.args.device)
             else:continue
 
@@ -69,7 +71,7 @@ class Trainer(object):
             loss.backward()
             if not self.args.model_name == 'sgns':
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.clip)
-            if self.args.multi_node:            
+            if self.multi_node:            
                 self.average_gradients()
                 print('average gradient')
             self.optimizer.step()

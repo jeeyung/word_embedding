@@ -218,7 +218,8 @@ class PretrainedDataset(Dataset):
         self.embeddings = torch.nn.Embedding.from_pretrained(weights)
 
         self.vocab = self.word2idx.keys()
-        self.char2idx, self.idx2char = map_char_idx()
+        self.char2idx, self.idx2char = self.map_char_idx()
+
 
     def is_data_exist(self):
         if os.path.isfile(self.file_dir):
@@ -227,17 +228,17 @@ class PretrainedDataset(Dataset):
         else:
             raise FileNotFoundError("Pretrained {} does not exist".format(self.file_dir))
 
-    @staticmethod
-    def map_char_idx():
+    def map_char_idx(self):
         alphabet = 'abcdefghijklmnopqrstuvwxyz'
         char2idx = {}
         idx2char = {}
         for i in range(len(alphabet)):
-            char2idx[list(alphabet)[i]] = i+1
-            idx2char[i+1] = list(alphabet)[i]
+            char2idx[list(alphabet)[i]] = i + 1
+            idx2char[i + 1] = list(alphabet)[i]
         return char2idx, idx2char
 
     def make_chars(self, word):
+        print([char for char in list(word)])
         word2char_idx = [self.char2idx[char] for char in list(word)]
         return word2char_idx
 

@@ -81,19 +81,14 @@ class TextDataLoader(DataLoader):
         self.dataset = TextDataset(data_dir, dataset, window_size, ns_size, remove_th, subsample_th, is_character)
         if multinode:
             size = distributed.get_world_size()
-            batch_size_dis = int(batch_size / float(size))
+            batch_size = int(batch_size / float(size))
             partition_sizes = [1.0 / size for _ in range(size)]
             partition = DataParitioner(self.dataset, partition_sizes)
-            partition = partition.use(distributed.get_rank())
-            if is_character:
-                super(TextDataLoader, self).__init__(partition, batch_size_dis, num_workers=num_workers, collate_fn=collate_text, shuffle=True)
-            else:
-                super(TextDataLoader, self).__init__(partition, batch_size_dis, num_workers=num_workers, shuffle=True)
+            self.dataset = partition.use(distributed.get_rank())
+        if is_character:
+            super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers, collate_fn=collate_text, shuffle=True)
         else:
-            if is_character:
-                super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers, collate_fn=collate_text, shuffle=True)
-            else:
-                super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers, shuffle=True)
+            super(TextDataLoader, self).__init__(self.dataset, batch_size, num_workers=num_workers, shuffle=True)
 
 class TestDataLoader(DataLoader):
     def __init__(self, data_dir, batch_size):

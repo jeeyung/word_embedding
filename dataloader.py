@@ -81,7 +81,7 @@ class TextDataLoader(DataLoader):
         self.dataset = TextDataset(data_dir, dataset, window_size, ns_size, remove_th, subsample_th, is_character)
         if multinode:
             size = distributed.get_world_size()
-            batch_size_dis = batch_size / float(size)
+            batch_size_dis = int(batch_size / float(size))
             partition_sizes = [1.0 / size for _ in range(size)]
             partition = DataParitioner(self.dataset, partition_sizes)
             partition = partition.use(distributed.get_rank())

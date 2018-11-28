@@ -39,7 +39,7 @@ def collate_pretrained(list_inputs):
     batch = len(list_inputs)
     words = [input[0] for input in list_inputs]
     words_len = [len(word) for word in words]
-    embeddings = torch.cat([input[1].unsqueeze(0) for input in list_inputs], 0)
+    embeddings = torch.cat([input[1] for input in list_inputs], 0)
     max_len = max(words_len)
     padded_words = torch.zeros(batch, max_len, dtype=torch.long)
     for i in range(batch):

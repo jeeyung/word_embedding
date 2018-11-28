@@ -211,7 +211,8 @@ class PretrainedDataset(Dataset):
 
     def make_data(self, path):
         model = word2vec.KeyedVectors.load_word2vec_format(path, binary=True)
-        self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)}
+        self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)
+                         if len(self.preprocess(word))}
         self.idx2word = {idx: word for word, idx in self.word2idx.items()}
         weights = torch.FloatTensor(model.wv.vectors)
         self.embeddings = torch.nn.Embedding.from_pretrained(weights)
@@ -220,8 +221,10 @@ class PretrainedDataset(Dataset):
         self.char2idx, self.idx2char = self.map_char_idx()
 
     def preprocess(self, word):
-        word = re.sub(r"[^A-Za-z]+", '', word).lower()
-        return word
+        processed_word = re.sub(r"[^A-Za-z]+", '', word).lower()
+        #if processed_word == '':
+        #    print(word)
+        return processed_word
 
     def is_data_exist(self):
         if os.path.isfile(self.file_dir):
@@ -241,6 +244,8 @@ class PretrainedDataset(Dataset):
 
     def make_chars(self, word):
         word2char_idx = [self.char2idx[char] for char in list(word)]
+        if len(word2char_idx) == 0:
+            print(word2char_idx, word)
         return word2char_idx
 
     def __getitem__(self, i):

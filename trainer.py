@@ -18,7 +18,7 @@ from utils import result2dict
 import csv
 from torch import distributed, nn
 from torch.utils.data.distributed import DistributedSampler
-from random import Random 
+
 
 class Trainer(object):
     def __init__(self, args, model, device, optimizer, scheduler, writer, text_loader,
@@ -156,7 +156,7 @@ def train(args):
                                 args.multigpu, args.device, args.model_category)
     else:
         text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size, args.window_size, args.neg_sample_size,
-                                 args.is_character, args.num_workers, args.remove_th, args.subsample_th)
+                                 args.is_character, args.num_workers, args.remove_th, args.subsample_th, args.multi_node)
         if args.model_name == 'sgns':
             # model = skipgram(len(text_loader.dataset.vocabs), args.embed_size)
             model = skipgram(40000, args.embed_size)
@@ -200,7 +200,7 @@ def train(args):
                     wiki_datadir = args.dataset + dataset_dir
                     dataset = os.path.join(wiki_datadir, 'wiki_{0:02d}.bz2'.format(k+args.dataset_order))
                     text_loader = TextDataLoader(args.data_dir, dataset, args.batch_size, args.window_size, args.neg_sample_size,
-                                            args.is_character, args.num_workers, args.remove_th, args.subsample_th)
+                                            args.is_character, args.num_workers, args.remove_th, args.subsample_th, args.multi_node)
                     print("made text loader")
                     monitor_loss = trainer.train_epoch()
                     trainer.dataset_order += 1

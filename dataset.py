@@ -205,23 +205,24 @@ class TextDataset(Dataset):
 
 class PretrainedDataset(Dataset):
     def __init__(self, data_dir):
-        self.dataset_dir = os.path.join(data_dir, "GoogleNews-vectors-negative300.bin")
+        self.file_dir = os.path.join(data_dir, "pretrained/GoogleNews-vectors-negative300.bin")
         if self.is_data_exist():
-            self.make_data(self.dataset_dir)
+            self.make_data(self.file_dir)
 
     def make_data(self, path):
         model = word2vec.KeyedVectors.load_word2vec_format(path, binary=True)
-        self.idx2word = model.index2word
-        self.word2idx = {word: idx for idx, word in self.index2word.items()}
+        #self.idx2word = model.index2word
+        self.word2idx = {word: idx for idx, word in enumerate(model.wv.index2word)}
+        self.idx2word = {idx: word for idx, word in enumerate(model.wv.index2word)}
         weights = torch.FloatTensor(model.wv.vectors)
-        self.embeddings = torch.nn.Embedding._from_pretrained(weights)
+        self.embeddings = torch.nn.Embedding.from_pretrained(weights)
 
         self.vocab = self.word2idx.keys()
         self.char2idx, self.idx2char = map_char_idx()
 
     def is_data_exist(self):
         if os.path.isfile(self.file_dir):
-            print("Pretrained {} exist".format(self.file_dir))
+            print("Pretrained {} exists".format(self.file_dir))
             return True
         else:
             raise FileNotFoundError("Pretrained {} does not exist".format(self.file_dir))

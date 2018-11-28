@@ -50,7 +50,7 @@ class Pretrainer(Trainer):
             if self.args.multi_node:
                 self.average_gradients()
                 print('average gradient')
-                
+
             self.optimizer.step()
             self.monitor_loss += loss.item()
             if i % self.args.log_frequency == 0:
@@ -117,3 +117,6 @@ def train(args):
         writer.add_scalar('Epoch time', time.time() - start_time, epoch)
         train_loss = monitor_loss
 
+
+if __name__ == "__main__":
+    train(get_config())

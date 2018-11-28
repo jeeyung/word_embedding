@@ -73,7 +73,6 @@ class Trainer(object):
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.clip)
             if self.multi_node:            
                 self.average_gradients()
-                print('average gradient')
             self.optimizer.step()
             self.monitor_loss += loss.item()
             if i % self.args.log_frequency == 0:

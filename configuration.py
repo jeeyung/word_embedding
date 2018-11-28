@@ -40,7 +40,7 @@ def get_config():
     train_arg.add_argument('--epochs', default=10, type=int, help='number of total epochs (default: 10)')
     train_arg.add_argument('--lr', default=0.025, type=float, help='learning rate (default: 0.0002)')
     train_arg.add_argument('--clip', default=0.25, type=float)
-    train_arg.add_argument('--log-frequency', default=1000, type=int)
+    train_arg.add_argument('--log-frequency', default=100, type=int)
     train_arg.add_argument('--save-frequency', default=2, type=int)
     train_arg.add_argument('--timestamp', default=datetime.now().strftime("%y%m%d%H%M%S"), type=str)
     train_arg.add_argument('--load-model', default=None, type=str)

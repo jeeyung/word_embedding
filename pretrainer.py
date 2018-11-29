@@ -38,6 +38,7 @@ class Pretrainer(Trainer):
     def train_epoch(self):
         # self.scheduler.step()
         assert type(self.model).__name__ == "pretrained"
+        self.monitor_loss = 0
         for i, (word, word_len, embedding) in enumerate(self.text_loader):
             word = word.to(self.device)
             embedding = embedding.to(self.device)
@@ -96,7 +97,6 @@ def train(args):
         #args.timestamp = args.load_model_code[:12]
         #print('Model loaded')
 
-    writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)
     train_loss = 0
     trainer = Pretrainer(args, model, device, optimizer, scheduler, writer,
                          text_loader, epoch=0, monitor_loss=0, dataset_order=0, total_dataset_num=0)
@@ -109,6 +109,7 @@ def train(args):
         monitor_loss = trainer.train_epoch()
         print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
             (epoch), monitor_loss / len(text_loader.dataset), time.time() - start_time))
+        trainer.writer.add_scalar('Train loss', monitor_loss, epoch)
         #if epoch % 10 == 0:
         #    plot_embedding(args, model, text_loader, device, epoch, writer)
         torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +'model.pt')
@@ -116,8 +117,8 @@ def train(args):
         if train_loss > monitor_loss:
             torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')
             print("Best model saved")
-        writer.add_scalar('Epoch time', time.time() - start_time, epoch)
-        train_loss = monitor_loss
+            train_loss = monitor_loss
+        trainer.writer.add_scalar('Epoch time', time.time() - start_time, epoch)
 
 
 if __name__ == "__main__":

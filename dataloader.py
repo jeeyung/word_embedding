@@ -80,6 +80,10 @@ class TextDataLoader(DataLoader):
     def __init__(self, data_dir, dataset, batch_size, window_size, ns_size, is_character, num_workers, remove_th, subsample_th, multinode):
         self.dataset = TextDataset(data_dir, dataset, window_size, ns_size, remove_th, subsample_th, is_character)
         self.vocabs = self.dataset.vocabs
+        if is_character:
+            self.char2idx = self.dataset.char2idx
+        else:
+            self.word2idx = self.dataset.word2idx
         if multinode:
             size = distributed.get_world_size()
             batch_size = int(batch_size / float(size))

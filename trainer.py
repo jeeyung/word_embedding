@@ -78,9 +78,9 @@ class Trainer(object):
             self.monitor_loss += loss.item()
             if i % self.args.log_frequency == 0:
                 print('Train dataset: {} [{}/{} ({:.0f}%)] Loss: {:.8f}'.format(
-                    (self.dataset_order), i* self.args.batch_size , len(self.text_loader.dataset)/ distributed.get_world_size(),
-                    100. * i / len(self.text_loader)/ distributed.get_world_size(),
-                    loss/self.args.batch_size/distributed.get_world_size()))
+                    (self.dataset_order), i* self.args.batch_size /int(distributed.get_world_size()), len(self.text_loader.dataset),
+                    100. * i / len(self.text_loader),
+                    loss/self.args.batch_size*distributed.get_world_size()))
                 if self.args.dataset == "wiki_dump/":
                     step = i // self.args.log_frequency + math.ceil(self.total_dataset_num // self.args.batch_size // self.args.log_frequency)
                 else:
@@ -96,8 +96,8 @@ class Trainer(object):
 
 def evaluation(args, writer, model, device, text_loader, k):
     if args.model_name == "sgns":
-        sim_results = evaluate(model.eval(), device, True, text_loader.dataset.word2idx)
-        ana_results = evaluate(model.eval(), device, False, text_loader.dataset.word2idx)
+        sim_results = evaluate(model.eval(), device, True, text_loader.word2idx)
+        ana_results = evaluate(model.eval(), device, False, text_loader.word2idx)
     else:
         sim_results = evaluate(model.eval(), device, True)
         ana_results = evaluate(model.eval(), device, False)
@@ -112,11 +112,11 @@ def plot_embedding(args, model, text_loader, device, epoch, writer):
     writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config + '/' + str(epoch))
     vocabs = text_loader.vocabs
     if args.model_name == 'sgns':
-        tokenized = [text_loader.dataset.word2idx[vocab] for vocab in vocabs]
+        tokenized = [text_loader.word2idx[vocab] for vocab in vocabs]
         tokenized= torch.LongTensor(tokenized)
         features = model.get_center_embedding(tokenized.to(device))
     else:
-        tokenized = [[text_loader.dataset.char2idx[character] for character in vocab] for vocab in vocabs]
+        tokenized = [[text_loader.char2idx[character] for character in vocab] for vocab in vocabs]
         tokenized.sort(key=lambda x: len(x), reverse=True)
         token_lengths = list(map(len, tokenized))
         token_tensor = torch.zeros(len(tokenized), max(token_lengths), dtype=torch.long)

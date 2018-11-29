@@ -81,9 +81,9 @@ class TextDataLoader(DataLoader):
         self.dataset = TextDataset(data_dir, dataset, window_size, ns_size, remove_th, subsample_th, is_character)
         self.vocabs = self.dataset.vocabs
         if is_character:
-            self.word2idx = self.dataset.word2idx
-        else:
             self.char2idx = self.dataset.char2idx
+        else:
+            self.word2idx = self.dataset.word2idx
         if multinode:
             size = distributed.get_world_size()
             batch_size = int(batch_size / float(size))

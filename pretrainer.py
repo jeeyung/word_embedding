@@ -98,7 +98,7 @@ def train(args):
         #print('Model loaded')
 
     train_loss = 0
-    trainer = Pretrainer(args, model, device, optimizer, scheduler, writer,
+    trainer = Pretrainer(args, model, device, optimizer, scheduler, args.writer,
                          text_loader, epoch=0, monitor_loss=0, dataset_order=0, total_dataset_num=0)
 
     for epoch in range(args.epochs):

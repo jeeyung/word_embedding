@@ -76,16 +76,20 @@ class Trainer(object):
                 self.average_gradients()
             self.optimizer.step()
             self.monitor_loss += loss.item()
+            if self.args.dataset == 'wiki_dump/':
+                order = self.dataset_order
+            else:
+                order = self.epoch
             if i % self.args.log_frequency == 0:
                 print('Train dataset: {} [{}/{} ({:.0f}%)] Loss: {:.8f}'.format(
-                    (self.dataset_order), i* self.args.batch_size /int(distributed.get_world_size()), len(self.text_loader.dataset),
+                    order, i* self.args.batch_size /int(distributed.get_world_size()), len(self.text_loader.dataset),
                     100. * i / len(self.text_loader),
                     loss/self.args.batch_size*distributed.get_world_size()))
                 if self.args.dataset == "wiki_dump/":
                     step = i // self.args.log_frequency + math.ceil(self.total_dataset_num // self.args.batch_size // self.args.log_frequency)
                 else:
                     step = i // self.args.log_frequency + self.epoch * len(self.text_loader) // self.args.log_frequency
-                self.writer.add_scalar('Batch loss', loss / self.args.batch_size, step)
+                self.writer.add_scalar('Batch loss', loss / self.args.batch_size*distributed.get_world_size(), step)
                 # plot_embedding(args, model, text_loader, writer, device)
         if self.args.evaluation:
             if self.args.dataset == "wiki_dump/":

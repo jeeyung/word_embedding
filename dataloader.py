@@ -94,12 +94,12 @@ class TextDataLoader(DataLoader):
 class TestDataLoader(DataLoader):
     def __init__(self, data_dir, batch_size):
         self.dataset = TestDataset(data_dir)
-        super(TestDataLoader, self).__init__(self.dataset, batch_size, collate_fn=collate_word)
+        super(TestDataLoader, self).__init__(self.dataset, batch_size, collate_fn=collate_word, shuffle=True)
 
 class PretrainedDataLoader(DataLoader):
     def __init__(self, data_dir, batch_size):
         self.dataset = PretrainedDataset(data_dir)
-        super(PretrainedDataLoader, self).__init__(self.dataset, batch_size, collate_fn=collate_pretrained)
+        super(PretrainedDataLoader, self).__init__(self.dataset, batch_size, collate_fn=collate_pretrained, shuffle=True)
 
 
 if __name__ == '__main__':

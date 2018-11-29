@@ -36,7 +36,7 @@ class Pretrainer(Trainer):
         self.total_dataset_num = total_dataset_num
 
     def train_epoch(self):
-        self.scheduler.step()
+        # self.scheduler.step()
         assert type(self.model).__name__ == "pretrained"
         for i, (word, word_len, embedding) in enumerate(self.text_loader):
             word = word.to(self.device)

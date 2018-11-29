@@ -134,6 +134,7 @@ class pretrained(nn.Module):
         self.mlp = nn.Linear(hidden_size, fc_hidden)
         self.tanh = nn.Tanh()
         self.last_fc = nn.Linear(fc_hidden, embed_size)
+        self.models = models
 
     def cal_loss(self, predicted, target):
         loss = nn.MSELoss()

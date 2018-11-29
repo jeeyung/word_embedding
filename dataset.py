@@ -205,45 +205,54 @@ class TextDataset(Dataset):
 
 class PretrainedDataset(Dataset):
     def __init__(self, data_dir):
-        self.dataset_dir = os.path.join(data_dir, "GoogleNews-vectors-negative300.bin")
+        self.file_dir = os.path.join(data_dir, "pretrained/GoogleNews-vectors-negative300.bin")
         if self.is_data_exist():
-            self.make_data(self.dataset_dir)
+            self.make_data(self.file_dir)
 
     def make_data(self, path):
         model = word2vec.KeyedVectors.load_word2vec_format(path, binary=True)
-        self.idx2word = model.index2word
-        self.word2idx = {word: idx for idx, word in self.index2word.items()}
+        self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)
+                         if len(self.preprocess(word))}
+        self.idx2word = {idx: word for word, idx in self.word2idx.items()}
         weights = torch.FloatTensor(model.wv.vectors)
-        self.embeddings = torch.nn.Embedding._from_pretrained(weights)
-
+        self.embeddings = torch.nn.Embedding.from_pretrained(weights)
+        self.indices = list(self.idx2word.keys())
         self.vocab = self.word2idx.keys()
-        self.char2idx, self.idx2char = map_char_idx()
+        self.char2idx, self.idx2char = self.map_char_idx()
+
+    def preprocess(self, word):
+        processed_word = re.sub(r"[^A-Za-z]+", '', word).lower()
+        #if processed_word == '':
+        #    print(word)
+        return processed_word
 
     def is_data_exist(self):
         if os.path.isfile(self.file_dir):
-            print("Pretrained {} exist".format(self.file_dir))
+            print("Pretrained {} exists".format(self.file_dir))
             return True
         else:
             raise FileNotFoundError("Pretrained {} does not exist".format(self.file_dir))
 
-    @staticmethod
-    def map_char_idx():
+    def map_char_idx(self):
         alphabet = 'abcdefghijklmnopqrstuvwxyz'
         char2idx = {}
         idx2char = {}
         for i in range(len(alphabet)):
-            char2idx[list(alphabet)[i]] = i+1
-            idx2char[i+1] = list(alphabet)[i]
+            char2idx[list(alphabet)[i]] = i + 1
+            idx2char[i + 1] = list(alphabet)[i]
         return char2idx, idx2char
 
     def make_chars(self, word):
         word2char_idx = [self.char2idx[char] for char in list(word)]
+        if len(word2char_idx) == 0:
+            print(word2char_idx, word)
         return word2char_idx
 
-    def __getitem__(self, idx):
+    def __getitem__(self, i):
+        idx = self.indices[i]
         word = self.idx2word[idx]
-        char_word = self.make_chars(word)
-        embedding = self.embeddings(torch.LongTensor([idx]))
+        char_word = torch.tensor(self.make_chars(word))
+        embedding = torch.tensor(self.embeddings(torch.LongTensor([idx])))
         return char_word, embedding
 
     def __len__(self):

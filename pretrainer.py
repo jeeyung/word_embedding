@@ -36,7 +36,7 @@ class Pretrainer(Trainer):
         self.total_dataset_num = total_dataset_num
 
     def train_epoch(self):
-        self.scheduler.step()
+        # self.scheduler.step()
         assert type(self.model).__name__ == "pretrained"
         for i, (word, word_len, embedding) in enumerate(self.text_loader):
             word = word.to(self.device)
@@ -50,7 +50,7 @@ class Pretrainer(Trainer):
             if self.args.multi_node:
                 self.average_gradients()
                 print('average gradient')
-                
+
             self.optimizer.step()
             self.monitor_loss += loss.item()
             if i % self.args.log_frequency == 0:
@@ -74,7 +74,9 @@ def train(args):
     device = args.device
     text_loader = PretrainedDataLoader(args.data_dir, args.batch_size)
     # TODO : make pretrained model class in model.py
-    model = pretrained()
+    model = pretrained(args.vocab_size, args.char_embed_size, args.hidden_size,
+                       args.num_layer, args.dropout, args.mlp_size, args.embed_size, args.neg_sample_size, args.bidirectional,
+                       args.multigpu, args.device, args.model_category)
 
     model= model.to(device)
     print("made model")
@@ -117,3 +119,6 @@ def train(args):
         writer.add_scalar('Epoch time', time.time() - start_time, epoch)
         train_loss = monitor_loss
 
+
+if __name__ == "__main__":
+    train(get_config())

@@ -48,6 +48,7 @@ def get_config():
     train_arg.add_argument('--load-best-model', action='store_true')
     train_arg.add_argument('--log-dir', default='saved/runs/', type=str)
     train_arg.add_argument('--multigpu', action='store_true')
+    train_arg.add_argument('--is_ngram', action='store_true')
 
     train_arg.add_argument('--evaluation', action='store_true')
     #for large dataset dataloader

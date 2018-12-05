@@ -73,7 +73,7 @@ class Pretrainer(Trainer):
 
 def train(args):
     device = args.device
-    text_loader = PretrainedDataLoader(args.data_dir, args.batch_size)
+    text_loader = PretrainedDataLoader(args.data_dir, args.batch_size, args.is_ngram)
     # TODO : make pretrained model class in model.py
     model = pretrained(args.vocab_size, args.char_embed_size, args.hidden_size,
                        args.num_layer, args.dropout, args.mlp_size, args.embed_size, args.neg_sample_size, args.bidirectional,
@@ -86,19 +86,9 @@ def train(args):
 
     if args.load_model_code is not None:
         pass
-        #if args.load_best_model:
-        #    model_name = '/model_best.pt'
-        #else:
-        #    model_name = '/model.pt'
-        # model.load_state_dict(torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage))
-        #checkpoint = torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage)
-        #args.dataset_order += checkpoint['dataset_order']
-        #model.load_state_dict(checkpoint['model_state_dict'])
-        #args.timestamp = args.load_model_code[:12]
-        #print('Model loaded')
-
+    writer = SummaryWriter(args.log_dir + 'pretrain' + args.timestamp + '_' + args.config)
     train_loss = 0
-    trainer = Pretrainer(args, model, device, optimizer, scheduler, args.writer,
+    trainer = Pretrainer(args, model, device, optimizer, scheduler, writer,
                          text_loader, epoch=0, monitor_loss=0, dataset_order=0, total_dataset_num=0)
 
     for epoch in range(args.epochs):

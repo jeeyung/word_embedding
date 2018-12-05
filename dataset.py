@@ -19,6 +19,7 @@ from functools import wraps
 import time
 import csv
 import gensim.models.keyedvectors as word2vec
+import nltk
 
 def timefn(fn):
     def wrap(*args):
@@ -204,21 +205,30 @@ class TextDataset(Dataset):
         return len(self.word_pairs)
 
 class PretrainedDataset(Dataset):
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, is_ngram):
         self.file_dir = os.path.join(data_dir, "pretrained/GoogleNews-vectors-negative300.bin")
+        self.is_ngram = is_ngram
         if self.is_data_exist():
             self.make_data(self.file_dir)
 
     def make_data(self, path):
         model = word2vec.KeyedVectors.load_word2vec_format(path, binary=True)
-        self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)
-                         if len(self.preprocess(word))}
+        if self.is_ngram:
+            self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)
+                            if len(self.preprocess(word))>1}
+        else:
+            self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)
+                            if len(self.preprocess(word))}
         self.idx2word = {idx: word for word, idx in self.word2idx.items()}
+        print('completed making word2idx')
         weights = torch.FloatTensor(model.wv.vectors)
         self.embeddings = torch.nn.Embedding.from_pretrained(weights)
         self.indices = list(self.idx2word.keys())
         self.vocab = self.word2idx.keys()
-        self.char2idx, self.idx2char = self.map_char_idx()
+        if self.is_ngram:
+            self.ngram2idx, self.idx2ngram = self.map_ngram_idx()
+        else:
+            self.char2idx, self.idx2char = self.map_char_idx()
 
     def preprocess(self, word):
         processed_word = re.sub(r"[^A-Za-z]+", '', word).lower()
@@ -241,14 +251,44 @@ class PretrainedDataset(Dataset):
             char2idx[list(alphabet)[i]] = i + 1
             idx2char[i + 1] = list(alphabet)[i]
         return char2idx, idx2char
+    
+    @timefn
+    def map_ngram_idx(self):
+        ngram_list = []
+        alphabet = 'abcdefghijklmnopqrstuvwxyz'
+        for i, char_1 in enumerate(alphabet):
+            for k, char_2 in enumerate(alphabet):
+                ngram = char_1 + char_2
+                if ngram in ngram_list:
+                    continue
+                else:
+                    ngram_list.append(ngram)
+        print('# of ngram:', len(ngram_list))
+        ngram2idx={}
+        idx2ngram={}
+        for j in range(len(ngram_list)):
+            ngram2idx[ngram_list[j]] = j+1
+            idx2ngram[j+1] = ngram_list[j]
+        return ngram2idx, idx2ngram
 
     def make_chars(self, word):
         word2char_idx = [self.char2idx[char] for char in list(word)]
         if len(word2char_idx) == 0:
             print(word2char_idx, word)
         return word2char_idx
+    
+    def make_ngrams(self, word):
+        bigram_list = list(nltk.bigrams(list(word)))
+        word2ngram_idx = [self.ngram2idx[bi] for bi in bigram_list]
+        return word2ngram_idx
 
     def __getitem__(self, i):
+        if self.is_ngram:
+            idx = self.indices[i]
+            word = self.idx2word[idx]
+            ngram_word = torch.tensor(self.make_ngrams(word))
+            embedding = torch.tensor(self.embeddings(torch.LongTensor([idx])))
+            return ngram_word, embedding
         idx = self.indices[i]
         word = self.idx2word[idx]
         char_word = torch.tensor(self.make_chars(word))
@@ -257,7 +297,6 @@ class PretrainedDataset(Dataset):
 
     def __len__(self):
         return len(self.vocab)
-
 
 class TestDataset(Dataset):
     def __init__(self, data_dir):
@@ -334,15 +373,11 @@ def trial(i):
     print("file", i,"pid=", os.getpid())
     time.sleep(1)
 
-    #for jeeyung
-    # text_dataset = TextDataset('./data/extracted_wiki/A', dataset, 5, 7, 5, 1e-04, True)
-    #for cluster_server
-    # text_dataset = TextDataset('/disk2/wiki_dump/A/', dataset, 5, 7, 5, 1e-04, True)
-    #for dm_server
-    #text_dataset = TextDataset('/data/jeeyung/wiki_dump/A/', dataset, 5, 7, 5, 1e-04, False)
     text_dataset = TextDataset('/data/jeeyung/wiki_dump/C/', dataset, 5, 7, 5, 1e-04, True)
 
 if __name__ == '__main__':
+    pretrained_dataset = PretrainedDataset('./data',True)
+    print(pretrained_dataset.idx2ngram[1])
     # t1 = time.time()
     # text_dataset = TextDataset('./data/extracted_wiki/A', 'wiki_25.bz2', 5, 7, 5, 1e-04, True)
     # # text_dataset = TextDataset('./data', 'toy/merge.txt', 5, 7, 5, 1e-04, True)
@@ -350,8 +385,8 @@ if __name__ == '__main__':
     # print(t2-t1)
     # index = 1
     # print(text_dataset.word_pairs[index])
-    p = Pool(10)
-    p.map(trial, range(0,100))
-    p.close()
-    p.join()
+    # p = Pool(10)
+    # p.map(trial, range(0,100))
+    # p.close()
+    # p.join()
     

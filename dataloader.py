@@ -101,8 +101,8 @@ class TestDataLoader(DataLoader):
         super(TestDataLoader, self).__init__(self.dataset, batch_size, collate_fn=collate_word, shuffle=True)
 
 class PretrainedDataLoader(DataLoader):
-    def __init__(self, data_dir, batch_size):
-        self.dataset = PretrainedDataset(data_dir)
+    def __init__(self, data_dir, batch_size, is_ngram):
+        self.dataset = PretrainedDataset(data_dir, is_ngram)
         super(PretrainedDataLoader, self).__init__(self.dataset, batch_size, collate_fn=collate_pretrained, shuffle=True)
 
 

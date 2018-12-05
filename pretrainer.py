@@ -36,7 +36,7 @@ class Pretrainer(Trainer):
         self.total_dataset_num = total_dataset_num
 
     def train_epoch(self):
-        # self.scheduler.step()
+        self.scheduler.step()
         assert type(self.model).__name__ == "pretrained"
         self.monitor_loss = 0
         for i, (word, word_len, embedding) in enumerate(self.text_loader):
@@ -50,12 +50,11 @@ class Pretrainer(Trainer):
             if self.args.multi_node:
                 self.average_gradients()
                 print('average gradient')
-
             self.optimizer.step()
             self.monitor_loss += loss.item()
             if i % self.args.log_frequency == 0:
                 print('Train dataset: {} [{}/{} ({:.0f}%)] Loss: {:.8f}'.format(
-                    (self.dataset_order), i * self.args.batch_size, len(self.text_loader.dataset),
+                    (self.epoch), i * self.args.batch_size, len(self.text_loader.dataset),
                                           100. * i / len(self.text_loader),
                                           loss / self.args.batch_size))
                 if self.args.dataset == "wiki_dump/":
@@ -74,7 +73,7 @@ def train(args):
     device = args.device
     text_loader = PretrainedDataLoader(args.data_dir, args.batch_size, args.is_ngram)
     # TODO : make pretrained model class in model.py
-    model = pretrained(args.vocab_size, args.char_embed_size, args.hidden_size,
+    model = pretrained_attn(args.vocab_size, args.char_embed_size, args.hidden_size,
                        args.num_layer, args.dropout, args.mlp_size, args.embed_size, args.neg_sample_size, args.bidirectional,
                        args.multigpu, args.device, args.model_category)
 

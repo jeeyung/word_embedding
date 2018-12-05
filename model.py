@@ -46,9 +46,12 @@ class generator(nn.Module):
         x, unsort_idx, x_ordered = self.sorting(x, x_len)
         embedded = self.embedding(x)
         embedded = pack_padded_sequence(embedded, x_ordered, batch_first = True)
-        _, (h,_) = self.lstm(embedded)
+        h_total, (h,_) = self.lstm(embedded)
         ordered_output = h[-1].index_select(0, unsort_idx)
-        return ordered_output
+        #debug required
+        h_total_output = h_total[-1].index_select(0, unsort_dix)
+        print('h_total_size',h_total_output.shape)
+        return ordered_output, h_total_output
 
 class skipgram(nn.Module):
     def __init__(self, vocab_size, embed_size):
@@ -137,7 +140,7 @@ class pretrained(nn.Module):
         self.models = models
 
     def cal_loss(self, predicted, target):
-        loss = nn.MSELoss()
+        loss = nn.MSELoss(size_average=False)
         return loss(predicted, target)
 
     def forward(self, word, word_len, true_embedding):
@@ -151,6 +154,30 @@ class pretrained(nn.Module):
         loss = self.cal_loss(predicted_embedding, true_embedding)
         return loss
 
+class pretrained_attn(nn.Module):
+    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, fc_hidden, embed_size, k, bidirectional, multigpu, device, models):
+        super(pretrained_attn, self).__init__()
+        self.embedding_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
+        self.mlp = nn.Linear(hidden_size, fc_hidden)
+        self.tanh = nn.Tanh()
+        self.last_fc = nn.Linear(fc_hidden, embed_size)
+        self.models = models
+        self.attn = nn.Linear(hidden_size, attn_size)
+        self.attn_combine = nn.Linear(hidden_size*2, hidden_size)
+        self.w2_vec = nn.Linear(embed_size, 1)
+
+    def cal_loss(self, predicted, target):
+        loss = nn.MSELoss(size_average=False)
+        return loss(predicted, target)
+
+    def forward(self, word, word_len, true_embedding):
+        h, h_total = self.embedding_generator(word, word_len)
+        attn_weight = F.softmax(self.w2_vec(self.tanh(self.attn(h_total))))
+        print('attn_size', attn_weight.shape)
+        predicted_embedding = torch.bmm(attn_weight, h_total)
+        print(predicted_embedding.shape)
+        loss = self.cal_loss(predicted_embedding, true_embedding)
+        return loss
 
 
 if __name__=='__main__':

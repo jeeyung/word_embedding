@@ -45,7 +45,6 @@ class Pretrainer(Trainer):
             self.optimizer.zero_grad()
             loss = self.model(word, word_len, embedding)
             loss.backward()
-
             if not self.args.model_name == 'sgns':
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.clip)
             if self.args.multi_node:
@@ -94,7 +93,6 @@ def train(args):
     for epoch in range(args.epochs):
         trainer.monitor_loss = 0
         trainer.epoch = epoch
-
         start_time = time.time()
         monitor_loss = trainer.train_epoch()
         print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
@@ -102,10 +100,10 @@ def train(args):
         trainer.writer.add_scalar('Train loss', monitor_loss, epoch)
         #if epoch % 10 == 0:
         #    plot_embedding(args, model, text_loader, device, epoch, writer)
-        torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/' +'model.pt')
+        torch.save(model.state_dict(), args.log_dir + 'pretrain' + args.timestamp + '_' + args.config + '/' +'model.pt')
         print("Model saved")
         if train_loss > monitor_loss:
-            torch.save(model.state_dict(), args.log_dir + args.timestamp + '_' + args.config + '/model_best.pt')
+            torch.save(model.state_dict(), args.log_dir + 'pretrain'+ args.timestamp + '_' + args.config + '/model_best.pt')
             print("Best model saved")
             train_loss = monitor_loss
         trainer.writer.add_scalar('Epoch time', time.time() - start_time, epoch)

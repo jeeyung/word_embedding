@@ -39,7 +39,7 @@ def get_config():
     train_arg.add_argument('--device', default=0, type=int)
     train_arg.add_argument('--batch-size', default=64, type=int, help='mini-batch size (default: 64)')
     train_arg.add_argument('--epochs', default=128, type=int, help='number of total epochs (default: 10)')
-    train_arg.add_argument('--lr', default=0.025, type=float, help='learning rate (default: 0.0002)')
+    train_arg.add_argument('--lr', default=0.1, type=float, help='learning rate (default: 0.0002)')
     train_arg.add_argument('--clip', default=0.25, type=float)
     train_arg.add_argument('--log-frequency', default=100, type=int)
     train_arg.add_argument('--save-frequency', default=2, type=int)
@@ -68,6 +68,8 @@ def get_config():
     args.device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     if args.is_character:
         args.model_name = 'lstm'
+    if args.is_ngram:
+        args.vocab_size = 730
     if args.is_character and args.model_category is None:
         parser.error('model category is required when is-character is True')
 

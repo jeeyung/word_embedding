@@ -12,6 +12,7 @@ class generator(nn.Module):
         super(generator, self).__init__()
         self.multigpu = multigpu
         self.device = device
+        self.bidirectional = bidirectional
         self.embedding = nn.Embedding(char_num, gen_embed_dim, padding_idx=0)
         self.lstm = nn.LSTM(gen_embed_dim, hidden_size, num_layers=num_layer,
                     dropout=dropout, batch_first = True, bidirectional=bidirectional)
@@ -37,9 +38,16 @@ class generator(nn.Module):
         embedded = self.embedding(x)
         embedded = pack_padded_sequence(embedded, x_ordered, batch_first = True)
         output, (h,_) = self.lstm(embedded)
-        ordered_hidden = h[-1].index_select(0, unsort_idx)
-        output_padded, _ = pad_packed_sequence(output, batch_first=True)
-        ordered_output = output_padded.index_select(0, unsort_idx)
+        if self.bidirectional:
+            ordered_hidden_1 = h[-1].index_select(0, unsort_idx)
+            ordered_hidden_2 = h[-2].index_select(0, unsort_idx)
+            ordered_hidden = torch.cat((ordered_hidden_1,ordered_hidden_2), dim=1)
+            output_padded, _ = pad_packed_sequence(output, batch_first=True)
+            ordered_output = output_padded.index_select(0, unsort_idx)
+        else:
+            ordered_hidden = h[-1].index_select(0, unsort_idx)
+            output_padded, _ = pad_packed_sequence(output, batch_first=True)
+            ordered_output = output_padded.index_select(0, unsort_idx)
         return ordered_hidden, ordered_output
 
 class skipgram(nn.Module):
@@ -151,26 +159,29 @@ class pretrained(nn.Module):
         self.model_name = models
         self.is_attn = is_attn
         self.hidden_size = hidden_size
+        self.bidirectional = bidirectional
+        if self.bidirectional:
+            self.hidden_size = hidden_size*2 
         self.add_fc= nn.Sequential(
-            nn.Linear(hidden_size, embed_size)
+            nn.Linear(self.hidden_size, embed_size)
         )
         self.add_fc_activation= nn.Sequential(
-            nn.Linear(hidden_size, embed_size),
+            nn.Linear(self.hidden_size, embed_size),
             nn.Tanh()
         )
         self.add_mlp= nn.Sequential(
-            nn.Linear(hidden_size, fc_hidden),
+            nn.Linear(self.hidden_size, fc_hidden),
             nn.Tanh(),
             nn.Linear(fc_hidden, embed_size)
         )
         self.attn = nn.Sequential(
-                        nn.Linear(hidden_size, attn_size),
+                        nn.Linear(self.hidden_size, attn_size),
                         nn.Tanh(),
                         nn.Linear(attn_size, 1)
         )
-        self.attn_combine = nn.Linear(hidden_size*2, hidden_size)
 
     def cal_loss(self, predicted, target):
+        # loss = nn.PairwiseDistance()
         loss = nn.MSELoss(size_average=False)
         return loss(predicted, target)
 

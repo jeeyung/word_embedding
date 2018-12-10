@@ -66,7 +66,7 @@ class Pretrainer(Trainer):
                 # plot_embedding(args, model, text_loader, writer, device)
         if self.args.evaluation:
             pass
-        return self.monitor_loss/len(self.text_loader.dataset)
+        return self.monitor_loss
 
 def train(args):
     device = args.device
@@ -95,7 +95,7 @@ def train(args):
         monitor_loss = trainer.train_epoch()
         print('====> Epoch: {} Average loss: {:.4f} / Time: {:.4f}'.format(
             (epoch), monitor_loss / len(text_loader.dataset), time.time() - start_time))
-        trainer.writer.add_scalar('Train loss', monitor_loss, epoch)
+        trainer.writer.add_scalar('Train loss', monitor_loss/ len(text_loader.dataset), epoch)
         #if epoch % 10 == 0:
         #    plot_embedding(args, model, text_loader, device, epoch, writer)
         torch.save(model.state_dict(), args.log_dir + 'pretrain' + args.timestamp + '_' + args.config + '/' +'model.pt')

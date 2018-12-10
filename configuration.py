@@ -11,14 +11,14 @@ def get_config():
 
     model_arg = parser.add_argument_group('Model')
     model_arg.add_argument('--model-name', default='sgns', type=str)
-    model_arg.add_argument('--model-category', default='tanh', type=str)
+    model_arg.add_argument('--model-category', default='fc_acti', type=str)
     model_arg.add_argument('--embed-size', default=300, type=int)
     model_arg.add_argument('--char-embed-size', default=128, type=int)
-    model_arg.add_argument('--vocab-size', default=27, type=int)
+    model_arg.add_argument('--vocab-size', default=28, type=int)
     model_arg.add_argument('--hidden-size', default=512, type=int)
     model_arg.add_argument('--dropout', default=0.2, type= float)
     model_arg.add_argument('--num-layer', default=1, type=int)
-    model_arg.add_argument('--mlp-size', default=300, type=int)
+    model_arg.add_argument('--mlp-size', default=400, type=int)
     model_arg.add_argument('--bidirectional', action='store_true')
     model_arg.add_argument('--attn-size', default=300, type=int)
 
@@ -70,11 +70,10 @@ def get_config():
         args.model_name = 'lstm'
     if args.is_character and args.model_category is None:
         parser.error('model category is required when is-character is True')
-    if args.is_attn and args.attn_size is None:
-        parser.error('attn size is required when is-attn is True')
-        
+
     config_list = [args.model_name, args.embed_size, args.hidden_size,\
                    args.dataset, args.window_size, args.neg_sample_size, args.is_character,\
-                   args.device, args.batch_size, args.epochs, args.lr, args.bidirectional, args.num_layer, args.model_category,  args.memo]
+                   args.device, args.batch_size, args.epochs, args.lr, args.bidirectional, args.num_layer, args.model_category,
+                   args.is_attn, args.is_ngram,  args.memo]
     args.config = '_'.join(list(map(str, config_list))).replace("/", ".")
     return args

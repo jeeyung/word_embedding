@@ -37,9 +37,9 @@ def collate_word(words):
 
 def collate_pretrained(list_inputs):
     batch = len(list_inputs)
-    words = [input[0] for input in list_inputs]
+    words = [list_input[0] for list_input in list_inputs]
     words_len = [len(word) for word in words]
-    embeddings = torch.cat([input[1] for input in list_inputs], 0)
+    embeddings = torch.cat([list_input[1] for list_input in list_inputs], 0)
     max_len = max(words_len)
     padded_words = torch.zeros(batch, max_len, dtype=torch.long)
     for i in range(batch):
@@ -125,6 +125,6 @@ if __name__ == '__main__':
     #         print(ns_words)
     #         if i > 10:
     #             break
-    test_loader = TestDataLoader('./data', 12, 1)
+    test_loader = PretrainedDataLoader('./data', 12, False)
     for data in test_loader:
         print(data)

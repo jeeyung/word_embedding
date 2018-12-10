@@ -219,6 +219,7 @@ class PretrainedDataset(Dataset):
         else:
             self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)
                             if len(self.preprocess(word))}
+
         self.idx2word = {idx: word for word, idx in self.word2idx.items()}
         print('completed making word2idx')
         weights = torch.FloatTensor(model.wv.vectors)
@@ -231,9 +232,7 @@ class PretrainedDataset(Dataset):
             self.char2idx, self.idx2char = self.map_char_idx()
 
     def preprocess(self, word):
-        processed_word = re.sub(r"[^A-Za-z]+", '', word).lower()
-        #if processed_word == '':
-        #    print(word)
+        processed_word = re.sub(r"[^A-Za-z_]+", '', word).lower()
         return processed_word
 
     def is_data_exist(self):
@@ -244,7 +243,7 @@ class PretrainedDataset(Dataset):
             raise FileNotFoundError("Pretrained {} does not exist".format(self.file_dir))
 
     def map_char_idx(self):
-        alphabet = 'abcdefghijklmnopqrstuvwxyz'
+        alphabet = 'abcdefghijklmnopqrstuvwxyz_'
         char2idx = {}
         idx2char = {}
         for i in range(len(alphabet)):
@@ -255,10 +254,10 @@ class PretrainedDataset(Dataset):
     @timefn
     def map_ngram_idx(self):
         ngram_list = []
-        alphabet = 'abcdefghijklmnopqrstuvwxyz'
+        alphabet = 'abcdefghijklmnopqrstuvwxyz_'
         for i, char_1 in enumerate(alphabet):
             for k, char_2 in enumerate(alphabet):
-                ngram = char_1 + char_2
+                ngram = (char_1,char_2)
                 if ngram in ngram_list:
                     continue
                 else:
@@ -376,8 +375,9 @@ def trial(i):
     text_dataset = TextDataset('/data/jeeyung/wiki_dump/C/', dataset, 5, 7, 5, 1e-04, True)
 
 if __name__ == '__main__':
-    pretrained_dataset = PretrainedDataset('./data',True)
-    print(pretrained_dataset.idx2ngram[1])
+    pretrained_dataset = PretrainedDataset('./data',False)
+    # for i in range(100):
+        # print(pretrained_dataset.idx2word[pretrained_dataset.indices[i]])
     # t1 = time.time()
     # text_dataset = TextDataset('./data/extracted_wiki/A', 'wiki_25.bz2', 5, 7, 5, 1e-04, True)
     # # text_dataset = TextDataset('./data', 'toy/merge.txt', 5, 7, 5, 1e-04, True)

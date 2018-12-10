@@ -33,24 +33,13 @@ class generator(nn.Module):
         return x, unsort_idx, x_ordered
 
     def forward(self, x, x_len):
-        if self.multigpu:
-            total_len = x.size(0)*4
-            if torch.cuda.current_device() == 0:
-                x_len=x_len[:1*int(total_len/4)]
-            elif torch.cuda.current_device() == 1:
-                x_len=x_len[1*int(total_len/4):2*int(total_len/4)]
-            elif torch.cuda.current_device() == 2:
-                x_len=x_len[2*int(total_len/4):3*int(total_len/4)]
-            else:
-                x_len=x_len[3*int(total_len/4):total_len]
         x, unsort_idx, x_ordered = self.sorting(x, x_len)
         embedded = self.embedding(x)
         embedded = pack_padded_sequence(embedded, x_ordered, batch_first = True)
         h_total, (h,_) = self.lstm(embedded)
         ordered_output = h[-1].index_select(0, unsort_idx)
-        #debug required
-        h_total_output = h_total[-1].index_select(0, unsort_dix)
-        print('h_total_size',h_total_output.shape)
+        output, _ = pad_packed_sequence(h_total, batch_first=True)
+        h_total_output = output.index_select(0, unsort_idx)
         return ordered_output, h_total_output
 
 class skipgram(nn.Module):
@@ -155,16 +144,19 @@ class pretrained(nn.Module):
         return loss
 
 class pretrained_attn(nn.Module):
-    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, fc_hidden, embed_size, k, bidirectional, multigpu, device, models):
+    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, fc_hidden, embed_size, k, bidirectional, multigpu, device, models, attn_size):
         super(pretrained_attn, self).__init__()
         self.embedding_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
-        self.mlp = nn.Linear(hidden_size, fc_hidden)
-        self.tanh = nn.Tanh()
-        self.last_fc = nn.Linear(fc_hidden, embed_size)
+        self.mlp = nn.Linear(hidden_size, embed_size)
+        # self.last_fc = nn.Linear(fc_hidden, embed_size)
         self.models = models
-        self.attn = nn.Linear(hidden_size, attn_size)
+        self.hidden_size = hidden_size
+        self.attn = nn.Sequential(
+                        nn.Linear(hidden_size, attn_size),
+                        nn.Tanh(),
+                        nn.Linear(attn_size, 1)
+        )
         self.attn_combine = nn.Linear(hidden_size*2, hidden_size)
-        self.w2_vec = nn.Linear(embed_size, 1)
 
     def cal_loss(self, predicted, target):
         loss = nn.MSELoss(size_average=False)
@@ -172,13 +164,13 @@ class pretrained_attn(nn.Module):
 
     def forward(self, word, word_len, true_embedding):
         h, h_total = self.embedding_generator(word, word_len)
-        attn_weight = F.softmax(self.w2_vec(self.tanh(self.attn(h_total))))
-        print('attn_size', attn_weight.shape)
-        predicted_embedding = torch.bmm(attn_weight, h_total)
-        print(predicted_embedding.shape)
+        b_size = h_total.size(0)
+        attn = self.attn(h_total.view(-1, self.hidden_size))
+        attn_weight = F.softmax(attn.view(b_size, -1), dim=1).unsqueeze(2)
+        attn_hidden = (h_total*attn_weight).sum(dim=1)
+        predicted_embedding = self.mlp(attn_hidden)
         loss = self.cal_loss(predicted_embedding, true_embedding)
         return loss
-
 
 if __name__=='__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')

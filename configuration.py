@@ -20,6 +20,7 @@ def get_config():
     model_arg.add_argument('--num-layer', default=1, type=int)
     model_arg.add_argument('--mlp-size', default=300, type=int)
     model_arg.add_argument('--bidirectional', action='store_true')
+    model_arg.add_argument('--attn-size', default=300, type=int)
 
     data_arg = parser.add_argument_group('Data')
     data_arg.add_argument('--data-dir', default='data', type=str, help='directory of training/testing data (default: datasets)')
@@ -49,6 +50,7 @@ def get_config():
     train_arg.add_argument('--log-dir', default='saved/runs/', type=str)
     train_arg.add_argument('--multigpu', action='store_true')
     train_arg.add_argument('--is_ngram', action='store_true')
+    train_arg.add_argument('--is_attn', action='store_true')
 
     train_arg.add_argument('--evaluation', action='store_true')
     #for large dataset dataloader
@@ -68,8 +70,11 @@ def get_config():
         args.model_name = 'lstm'
     if args.is_character and args.model_category is None:
         parser.error('model category is required when is-character is True')
+    if args.is_attn and args.attn_size is None:
+        parser.error('attn size is required when is-attn is True')
+        
     config_list = [args.model_name, args.embed_size, args.hidden_size,\
                    args.dataset, args.window_size, args.neg_sample_size, args.is_character,\
-                   args.device, args.batch_size, args.epochs, args.lr, args.bidirectional, args.num_layer, args.model_category, args.memo]
+                   args.device, args.batch_size, args.epochs, args.lr, args.bidirectional, args.num_layer, args.model_category,  args.memo]
     args.config = '_'.join(list(map(str, config_list))).replace("/", ".")
     return args

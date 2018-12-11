@@ -39,7 +39,7 @@ def get_config():
     train_arg.add_argument('--device', default=0, type=int)
     train_arg.add_argument('--batch-size', default=64, type=int, help='mini-batch size (default: 64)')
     train_arg.add_argument('--epochs', default=128, type=int, help='number of total epochs (default: 10)')
-    train_arg.add_argument('--lr', default=0.1, type=float, help='learning rate (default: 0.0002)')
+    train_arg.add_argument('--lr', default=0.025, type=float, help='learning rate (default: 0.0002)')
     train_arg.add_argument('--clip', default=0.25, type=float)
     train_arg.add_argument('--log-frequency', default=100, type=int)
     train_arg.add_argument('--save-frequency', default=2, type=int)

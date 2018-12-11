@@ -182,7 +182,8 @@ class pretrained(nn.Module):
 
     def cal_loss(self, predicted, target):
         # loss = nn.PairwiseDistance()
-        loss = nn.MSELoss(size_average=False)
+        loss = nn.CosineSimilarity()
+        # loss = nn.MSELoss(size_average=False)
         return loss(predicted, target)
 
     def forward(self, word, word_len, true_embedding):
@@ -198,7 +199,12 @@ class pretrained(nn.Module):
             predicted_embedding = self.add_fc(hidden)
         else:
             predicted_embedding = self.add_mlp(hidden)
-        loss = self.cal_loss(predicted_embedding, true_embedding)
+        # for pairwisedistance
+        # loss = self.cal_loss(predicted_embedding, true_embedding).sum()
+        # for cosine similarity
+        loss = -self.cal_loss(predicted_embedding, true_embedding).sum()
+        # for mse
+        # loss = self.cal_loss(predicted_embedding, true_embedding)
         return loss
 
 if __name__=='__main__':

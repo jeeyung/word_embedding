@@ -168,9 +168,6 @@ def train(args):
             model = word_embed_ng(args.vocab_size, args.char_embed_size, args.hidden_size,
                                 args.num_layer, args.dropout, args.mlp_size, args.embed_size, 
                                 args.neg_sample_size, args.bidirectional, args.multigpu, args.device, args.model_category)
-    if torch.cuda.device_count() > 1 and args.multigpu:
-        print("using", torch.cuda.device_count(), "GPUs")
-        model = nn.DataParallel(model)
     model= model.to(device)
     print("made model")
     optimizer = optim.Adam(model.parameters(), lr=args.lr)

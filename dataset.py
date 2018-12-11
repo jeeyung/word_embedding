@@ -20,6 +20,10 @@ import time
 import csv
 import gensim.models.keyedvectors as word2vec
 import nltk
+from gensim.scripts.glove2word2vec import glove2word2vec
+from gensim.test.utils import datapath, get_tmpfile
+from torch.utils.data import DataLoader
+import torch.nn as nn
 
 def timefn(fn):
     def wrap(*args):
@@ -206,13 +210,18 @@ class TextDataset(Dataset):
 
 class PretrainedDataset(Dataset):
     def __init__(self, data_dir, is_ngram):
-        self.file_dir = os.path.join(data_dir, "pretrained/GoogleNews-vectors-negative300.bin")
+        # self.file_dir = os.path.join(data_dir, "pretrained/GoogleNews-vectors-negative300.bin")
+        self.file_dir = os.path.join(data_dir, "pretrained/glove.6B.300d.txt")
         self.is_ngram = is_ngram
         if self.is_data_exist():
             self.make_data(self.file_dir)
 
     def make_data(self, path):
-        model = word2vec.KeyedVectors.load_word2vec_format(path, binary=True)
+        # model = word2vec.KeyedVectors.load_word2vec_format(path, binary=True)
+        #for glove
+        tmp_file = get_tmpfile("test_word2vec.txt")
+        glove2word2vec(glove_input_file=path, word2vec_output_file=tmp_file)
+        model = word2vec.KeyedVectors.load_word2vec_format(tmp_file, binary=False, limit=500000)
         if self.is_ngram:
             self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)
                             if len(self.preprocess(word))>1}
@@ -367,6 +376,110 @@ class TestDataset(Dataset):
         word_idx = torch.tensor(self.words[idx])
         return word_idx
 
+class PretrainedDataset_test(Dataset):
+    def __init__(self, data_dir, is_ngram):
+        self.file_dir = os.path.join(data_dir, "pretrained/GoogleNews-vectors-negative300.bin")
+        self.is_ngram = is_ngram
+        if self.is_data_exist():
+            self.make_data(self.file_dir)
+
+    def make_data(self, path):
+        model = word2vec.KeyedVectors.load_word2vec_format(path, binary=True, limit=2000)
+        #for glove
+        if self.is_ngram:
+            self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)
+                            if len(self.preprocess(word))>1}
+        else:
+            self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)
+                            if len(self.preprocess(word))}
+
+        self.idx2word = {idx: word for word, idx in self.word2idx.items()}
+        print('completed making word2idx')
+        weights = torch.FloatTensor(model.wv.vectors)
+        # self.embeddings = torch.nn.Embedding.from_pretrained(weights)
+        self.embedding_mul = self.cal_embedding(weights)
+        self.indices = list(self.idx2word.keys())
+        self.vocab = self.word2idx.keys()
+
+        if self.is_ngram:
+            self.ngram2idx, self.idx2ngram = self.map_ngram_idx()
+        else:
+            self.char2idx, self.idx2char = self.map_char_idx()
+
+    def cal_embedding(self, embeddings):
+        print(type(embeddings))
+        embedding_mul = torch.matmul(embeddings, embeddings.t())
+        self.embedding_mul_flatten = embedding_mul.view(-1, 1)
+
+    def preprocess(self, word):
+        processed_word = re.sub(r"[^A-Za-z_]+", '', word).lower()
+        return processed_word
+
+    def is_data_exist(self):
+        if os.path.isfile(self.file_dir):
+            print("Pretrained {} exists".format(self.file_dir))
+            return True
+        else:
+            raise FileNotFoundError("Pretrained {} does not exist".format(self.file_dir))
+
+    def map_char_idx(self):
+        alphabet = 'abcdefghijklmnopqrstuvwxyz_'
+        char2idx = {}
+        idx2char = {}
+        for i in range(len(alphabet)):
+            char2idx[list(alphabet)[i]] = i + 1
+            idx2char[i + 1] = list(alphabet)[i]
+        return char2idx, idx2char
+    
+    @timefn
+    def map_ngram_idx(self):
+        ngram_list = []
+        alphabet = 'abcdefghijklmnopqrstuvwxyz_'
+        for i, char_1 in enumerate(alphabet):
+            for k, char_2 in enumerate(alphabet):
+                ngram = (char_1,char_2)
+                if ngram in ngram_list:
+                    continue
+                else:
+                    ngram_list.append(ngram)
+        print('# of ngram:', len(ngram_list))
+        ngram2idx={}
+        idx2ngram={}
+        for j in range(len(ngram_list)):
+            ngram2idx[ngram_list[j]] = j+1
+            idx2ngram[j+1] = ngram_list[j]
+        return ngram2idx, idx2ngram
+
+    def make_chars(self, word):
+        word2char_idx = [self.char2idx[char] for char in list(word)]
+        if len(word2char_idx) == 0:
+            print(word2char_idx, word)
+        return word2char_idx
+    
+    def make_ngrams(self, word):
+        bigram_list = list(nltk.bigrams(list(word)))
+        word2ngram_idx = [self.ngram2idx[bi] for bi in bigram_list]
+        return word2ngram_idx
+
+    def __getitem__(self, i):
+        if self.is_ngram:
+            idx = self.indices[i]
+            word = self.idx2word[idx]
+            flatten_idx = idx * idx
+            ngram_word = torch.tensor(self.make_ngrams(word))
+            embedding = torch.tensor(self.embedding_mul_flatten(torch.LongTensor([flatten_idx])))
+            return ngram_word, embedding
+        idx = self.indices[i]
+        word = self.idx2word[idx]
+        flatten_idx = idx * idx
+        char_word = torch.tensor(self.make_chars(word))
+        embedding = torch.tensor(self.embedding_mul_flatten[flatten_idx])
+        print(embedding.shape, char_word.shape)
+        return embedding
+
+    def __len__(self):
+        return len(self.vocab)
+
 def trial(i):
     dataset = 'wiki_{0:02d}.bz2'.format(i)
     print("file", i,"pid=", os.getpid())
@@ -375,7 +488,7 @@ def trial(i):
     text_dataset = TextDataset('/data/jeeyung/wiki_dump/C/', dataset, 5, 7, 5, 1e-04, True)
 
 if __name__ == '__main__':
-    pretrained_dataset = PretrainedDataset('./data',False)
+    # pretrained_dataset = PretrainedDataset('./data',False)
     # for i in range(100):
         # print(pretrained_dataset.idx2word[pretrained_dataset.indices[i]])
     # t1 = time.time()
@@ -389,4 +502,14 @@ if __name__ == '__main__':
     # p.map(trial, range(0,100))
     # p.close()
     # p.join()
-    
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    dataset = PretrainedDataset_test('./data', False)
+    loader = torch.utils.data.DataLoader(dataset, batch_size=10)
+    # sim = nn.CosineSimilarity()
+    # similarity = 0 
+    # data_num = 0 
+    for i, embedding in enumerate(loader):
+        embedding = embedding.to(device)
+        print(embedding.shape)
+        # print(sk, gl)
+        # break

@@ -207,6 +207,63 @@ class pretrained(nn.Module):
         # loss = self.cal_loss(predicted_embedding, true_embedding)
         return loss
 
+class pretrained_test(nn.Module):
+    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, 
+                fc_hidden, embed_size, k, bidirectional, multigpu, device, models, is_attn, attn_size):
+        super(pretrained, self).__init__()
+        self.embedding_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
+        self.model_name = models
+        self.is_attn = is_attn
+        self.hidden_size = hidden_size
+        self.bidirectional = bidirectional
+        if self.bidirectional:
+            self.hidden_size = hidden_size*2 
+        self.add_fc= nn.Sequential(
+            nn.Linear(self.hidden_size, embed_size)
+        )
+        self.add_fc_activation= nn.Sequential(
+            nn.Linear(self.hidden_size, embed_size),
+            nn.Tanh()
+        )
+        self.add_mlp= nn.Sequential(
+            nn.Linear(self.hidden_size, fc_hidden),
+            nn.Tanh(),
+            nn.Linear(fc_hidden, embed_size)
+        )
+        self.attn = nn.Sequential(
+                        nn.Linear(self.hidden_size, attn_size),
+                        nn.Tanh(),
+                        nn.Linear(attn_size, 1)
+        )
+
+    def cal_loss(self, predicted, target):
+        inner_pre = torch.matmul(predictced, predicted.t())
+        print(inner_pre.shape)
+        inner_tar = torch.matmul(target, target.t())
+        print(inner_tar.shape)
+        loss = nn.MSELoss(size_average=False)
+        return loss(inner_pre, inner_tar)
+
+    def forward(self, word, word_len, true_embedding):
+        hidden, output = self.embedding_generator(word, word_len)
+        if self.is_attn:
+            b_size = output.size(0)
+            attn = self.attn(output.view(-1, self.hidden_size))
+            attn_weight = F.softmax(attn.view(b_size, -1), dim=1).unsqueeze(2)
+            hidden = (output*attn_weight).sum(dim=1)
+        if self.model_name == 'fc_acti':
+            predicted_embedding = self.add_fc_activation(hidden)
+        elif self.model_name == 'fc':
+            predicted_embedding = self.add_fc(hidden)
+        else:
+            predicted_embedding = self.add_mlp(hidden)
+        # for pairwisedistance
+        # loss = self.cal_loss(predicted_embedding, true_embedding).sum()
+        # for cosine similarity
+        loss = -self.cal_loss(predicted_embedding, true_embedding).sum()
+        # for mse
+        # loss = self.cal_loss(predicted_embedding, true_embedding)
+        return loss
 if __name__=='__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = word_embed_ng(26, 10, 10, 1, 0.3, 10, 5, False, True, device)

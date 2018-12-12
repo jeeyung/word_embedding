@@ -72,7 +72,7 @@ def train(args):
     device = args.device
     text_loader = PretrainedDataLoader(args.data_dir, args.batch_size, args.is_ngram)
     # TODO : make pretrained model class in model.py
-    model = pretrained(args.vocab_size, args.char_embed_size, args.hidden_size,
+    model = pretrained_test(args.vocab_size, args.char_embed_size, args.hidden_size,
                        args.num_layer, args.dropout, args.mlp_size, args.embed_size, args.neg_sample_size, args.bidirectional,
                        args.multigpu, args.device, args.model_category, args.is_attn, args.attn_size)
 

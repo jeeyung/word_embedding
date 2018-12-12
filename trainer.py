@@ -82,7 +82,7 @@ class Trainer(object):
                 order = self.epoch
             if i % self.args.log_frequency == 0:
                 print('Train dataset: {} [{}/{} ({:.0f}%)] Loss: {:.8f}'.format(
-                    order, i* int(self.args.batch_size /distributed.get_world_size()), len(self.text_loader.dataset),
+                    order, i* int(self.args.batch_size /distributed.get_world_size()), len(self.text_loader.dataset)/self.args.batch_size,
                     100. * i / len(self.text_loader),
                     loss/self.args.batch_size*distributed.get_world_size()))
                 if self.args.dataset == "wiki_dump/":

@@ -210,7 +210,7 @@ class pretrained(nn.Module):
 class pretrained_test(nn.Module):
     def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, 
                 fc_hidden, embed_size, k, bidirectional, multigpu, device, models, is_attn, attn_size):
-        super(pretrained, self).__init__()
+        super(pretrained_test, self).__init__()
         self.embedding_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
         self.model_name = models
         self.is_attn = is_attn
@@ -237,10 +237,8 @@ class pretrained_test(nn.Module):
         )
 
     def cal_loss(self, predicted, target):
-        inner_pre = torch.matmul(predictced, predicted.t())
-        print(inner_pre.shape)
+        inner_pre = torch.matmul(predicted, predicted.t())
         inner_tar = torch.matmul(target, target.t())
-        print(inner_tar.shape)
         loss = nn.MSELoss(size_average=False)
         return loss(inner_pre, inner_tar)
 
@@ -260,9 +258,9 @@ class pretrained_test(nn.Module):
         # for pairwisedistance
         # loss = self.cal_loss(predicted_embedding, true_embedding).sum()
         # for cosine similarity
-        loss = -self.cal_loss(predicted_embedding, true_embedding).sum()
+        #loss = -self.cal_loss(predicted_embedding, true_embedding).sum()
         # for mse
-        # loss = self.cal_loss(predicted_embedding, true_embedding)
+        loss = self.cal_loss(predicted_embedding, true_embedding)
         return loss
 if __name__=='__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')

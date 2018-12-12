@@ -221,7 +221,7 @@ class PretrainedDataset(Dataset):
         #for glove
         tmp_file = get_tmpfile("test_word2vec.txt")
         glove2word2vec(glove_input_file=path, word2vec_output_file=tmp_file)
-        model = word2vec.KeyedVectors.load_word2vec_format(tmp_file, binary=False, limit=500000)
+        model = word2vec.KeyedVectors.load_word2vec_format(tmp_file, binary=False, limit=200000)
         if self.is_ngram:
             self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)
                             if len(self.preprocess(word))>1}
@@ -385,7 +385,7 @@ def trial(i):
     text_dataset = TextDataset('/data/jeeyung/wiki_dump/C/', dataset, 5, 7, 5, 1e-04, True)
 
 if __name__ == '__main__':
-    # pretrained_dataset = PretrainedDataset('./data',False)
+     pretrained_dataset = PretrainedDataset('./data',False)
     # for i in range(100):
         # print(pretrained_dataset.idx2word[pretrained_dataset.indices[i]])
     # t1 = time.time()

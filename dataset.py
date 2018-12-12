@@ -385,7 +385,7 @@ def trial(i):
     text_dataset = TextDataset('/data/jeeyung/wiki_dump/C/', dataset, 5, 7, 5, 1e-04, True)
 
 if __name__ == '__main__':
-    # pretrained_dataset = PretrainedDataset('./data',False)
+    pretrained_dataset = PretrainedDataset('./data',False)
     # for i in range(100):
         # print(pretrained_dataset.idx2word[pretrained_dataset.indices[i]])
     # t1 = time.time()

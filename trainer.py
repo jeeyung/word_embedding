@@ -185,6 +185,8 @@ def train(args):
         print('Model loaded')
     writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)
     train_loss = 0
+    if args.dataset == "wiki_dump/":
+        text_loader = None
     trainer = Trainer(args, model, device, optimizer, scheduler, writer,
                                 text_loader, epoch=0, monitor_loss=0, dataset_order=0, total_dataset_num=0)
     for epoch in range(args.epochs):
@@ -203,6 +205,7 @@ def train(args):
                     text_loader = TextDataLoader(args.data_dir, dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                             args.is_character, args.num_workers, args.remove_th, args.subsample_th, args.multi_node)
                     print("made text loader")
+                    trainer.text_loader = text_loader
                     monitor_loss = trainer.train_epoch()
                     trainer.dataset_order += 1
                     trainer.total_dataset_num += len(text_loader.dataset)

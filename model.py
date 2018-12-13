@@ -76,7 +76,7 @@ class skipgram(nn.Module):
         return self.center_embedding(center)
 
 class word_embed_ng(nn.Module):
-    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, fc_hidden, embed_size, k, bidirectional, multigpu, device, models, is_attn):
+    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, fc_hidden, embed_size, k, bidirectional, multigpu, device, models, is_attn, attn_size):
         super(word_embed_ng, self).__init__()
         self.center_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
         self.context_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)

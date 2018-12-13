@@ -179,7 +179,7 @@ def train(args):
         else:
             model = word_embed_ng(args.vocab_size, args.char_embed_size, args.hidden_size,
                                 args.num_layer, args.dropout, args.mlp_size, args.embed_size, 
-                                args.neg_sample_size, args.bidirectional, args.multigpu, args.device, args.model_category, args.is_attn)
+                                args.neg_sample_size, args.bidirectional, args.multigpu, args.device, args.model_category, args.is_attn, args.attn_size)
     model= model.to(device)
     print("made model")
     if args.load_pretrained:

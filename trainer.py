@@ -51,7 +51,7 @@ class Trainer(object):
 
     def train_epoch(self):
         self.scheduler.step()
-        self.model.train()
+        # self.model.train()
         for i, (center,context, neg) in enumerate(self.text_loader):
             if self.args.is_character:
                 center, center_len = center

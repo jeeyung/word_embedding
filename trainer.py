@@ -199,6 +199,7 @@ def train(args):
     print("made model")
     if args.load_pretrained:
         model = load_pretrained(args.log_dir, model, args.load_pretrained_code)
+        print("load pretrained")
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = StepLR(optimizer, step_size=10, gamma=0.9)
     if args.load_model_code is not None:

@@ -124,9 +124,7 @@ class word_embed_ng(nn.Module):
 
     def cal_loss(self, x, y, neg):
         score_target = torch.bmm(x.unsqueeze(1),y.unsqueeze(2))
-        print(score_target.sum())
         score_neg = torch.bmm(x.unsqueeze(1), neg.transpose(0,1).transpose(1,2))
-        print(score_neg.sum())
         loss = -F.logsigmoid(score_target).sum() + -F.logsigmoid(-score_neg).sum()
         return loss
 

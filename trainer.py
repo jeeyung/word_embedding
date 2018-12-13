@@ -184,7 +184,7 @@ def train(args):
         else:
             model = word_embed_ng(args.vocab_size, args.char_embed_size, args.hidden_size,
                                 args.num_layer, args.dropout, args.mlp_size, args.embed_size, args.neg_sample_size, args.bidirectional,
-                                args.multigpu, args.device, args.model_category)
+                                args.multigpu, args.device, args.model_category, args.is_attn, args.attn_size)
     else:
         text_loader = TextDataLoader(args.data_dir, args.dataset, args.batch_size, args.window_size, args.neg_sample_size,
                                  args.is_character, args.num_workers, args.remove_th, args.subsample_th, args.multi_node)

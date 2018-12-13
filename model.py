@@ -179,11 +179,11 @@ class word_embed_ng(nn.Module):
     def get_center_embedding(self, center, center_len):
         embedded_cen, _ = self.center_generator(center, center_len)
         if self.model_name == "fc_acti":
-            embedding = self.add_fc_activation_cen(embedded_cen)
+            embedding = self.cen_add_fc_activation(embedded_cen)
         elif self.model_name == "fc":
-            embedding = self.add_fc_cen(embedded_cen)
+            embedding = self.cen_add_fc(embedded_cen)
         else:
-            embedding = self.add_mlp_cen(embedded_cen)
+            embedding = self.cen_add_mlp(embedded_cen)
         return embedding
 
 class pretrained(nn.Module):

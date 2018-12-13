@@ -14,16 +14,8 @@ def character_embedding(model, device, data_dir='./data', batch_size=2):
     embeddings = []
     for words, length in test_loader:
         words = words.to(device)
-        if model.models == "tanh":
-            embedding = model.tanh(model.mlp_center(model.center_generator(words, length)))
-            embeddings.append(embedding)
-        elif model.models == "linear":
-            embedding = model.mlp_center(model.center_generator(words, length))
-            embeddings.append(embedding)
-        else:
-            embedding = model.last_fc_cen(model.tanh(model.mlp_center(model.center_generator(words, length))))
-            embeddings.append(embedding)
-
+        embedding = model.get_center_embedding(words, length)
+        embeddings.append(embedding)
     embeddings = torch.cat(embeddings, 0)
     embedding_map = {}
     for word, embedding in zip(test_loader.dataset.test_words, embeddings):

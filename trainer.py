@@ -157,7 +157,7 @@ def load_pretrained(log_dir, model, load_file):
             try:
                 pre_index = process_pre.index(key.split("_",1)[1:][0])
             except:
-                pre_index = precess_pre.index(key.split("_",1)[1:][0].split("_",1)[1:][0])
+                pre_index = process_pre.index(key.split("_",1)[1:][0].split("_",1)[1:][0])
             layer_name, weights = new[pre_index]
             my_model_kvpair[key] = weights
         else:

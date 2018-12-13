@@ -138,7 +138,7 @@ class word_embed_ng(nn.Module):
             embedded_cen = (cen_output*attn_weight).sum(dim=1)
             attn = self.con_attn(con_output.view(-1, self.hidden_size))
             attn_weight = F.softmax(attn.view(b_size, -1), dim=1).unsqueeze(2)
-            embedded_cen = (con_output*attn_weight).sum(dim=1)
+            embedded_con = (con_output*attn_weight).sum(dim=1)
             
         if self.model_name == "fc_acti":
             prediction = self.add_fc_activation_cen(embedded_cen)

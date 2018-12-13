@@ -237,10 +237,8 @@ class pretrained_test(nn.Module):
         )
 
     def cal_loss(self, predicted, target):
-        inner_pre = torch.matmul(predictced, predicted.t())
-        print(inner_pre.shape)
+        inner_pre = torch.matmul(predicted, predicted.t())
         inner_tar = torch.matmul(target, target.t())
-        print(inner_tar.shape)
         loss = nn.MSELoss(size_average=False)
         return loss(inner_pre, inner_tar)
 

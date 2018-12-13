@@ -172,7 +172,7 @@ class word_embed_ng(nn.Module):
                     attn_weight = F.softmax(attn.view(b_size, -1), dim=1).unsqueeze(2)
                     embedded_neg = (neg_output*attn_weight).sum(dim=1)
                     neg_output.append(self.add_fc_activation_con(embedded_neg))
-        neg_output_tensor = torch.stack(neg_output)
+        neg_output_tensor = torch.stack(neg_outputs)
         loss = self.cal_loss(prediction, target, neg_output_tensor)
         return loss
     

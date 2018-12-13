@@ -183,7 +183,7 @@ def train(args):
     model= model.to(device)
     print("made model")
     if args.load_pretrained:
-        model = load_pretrained(args.logdir, model, args.load_pretrained_code)
+        model = load_pretrained(args.log-dir, model, args.load_pretrained_code)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = StepLR(optimizer, step_size=10, gamma=0.9)
     if args.load_model_code is not None:

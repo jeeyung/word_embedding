@@ -88,26 +88,26 @@ class word_embed_ng(nn.Module):
         self.k = k
         self.model_name = models
         self.cen_add_fc= nn.Sequential(
-            nn.Linear(hidden_size, embed_size)
+            nn.Linear(self.hidden_size, embed_size)
         )
         self.con_add_fc= nn.Sequential(
-            nn.Linear(hidden_size, embed_size)
+            nn.Linear(self.hidden_size, embed_size)
         )
         self.cen_add_fc_activation= nn.Sequential(
-            nn.Linear(hidden_size, embed_size),
+            nn.Linear(self.hidden_size, embed_size),
             nn.Tanh()
         )
         self.con_add_fc_activation= nn.Sequential(
-            nn.Linear(hidden_size, embed_size),
+            nn.Linear(self.hidden_size, embed_size),
             nn.Tanh()
         )
         self.cen_add_mlp= nn.Sequential(
-            nn.Linear(hidden_size, fc_hidden),
+            nn.Linear(self.hidden_size, fc_hidden),
             nn.Tanh(),
             nn.Linear(fc_hidden, embed_size)
         )
         self.con_add_mlp = nn.Sequential(
-            nn.Linear(hidden_size, fc_hidden),
+            nn.Linear(self.hidden_size, fc_hidden),
             nn.Tanh(),
             nn.Linear(fc_hidden, embed_size)
         )

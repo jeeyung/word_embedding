@@ -141,7 +141,7 @@ def init_process(args):
     )
 
 def load_pretrained(log_dir, model, load_file):
-    pre_trained_model = torch.load(log_dir + load_file)
+    pre_trained_model = torch.load(log_dir + load_file + '/model.pt')
     new = list(pre_trained_model.items())
     pretrained_keys = pre_trained_model.keys()
     my_model_kvpair = my_model.state_dict()
@@ -183,7 +183,7 @@ def train(args):
     model= model.to(device)
     print("made model")
     if args.load_pretrained:
-        model = load_pretrained(args.log-dir, model, args.load_pretrained_code)
+        model = load_pretrained(args.log_dir, model, args.load_pretrained_code)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = StepLR(optimizer, step_size=10, gamma=0.9)
     if args.load_model_code is not None:

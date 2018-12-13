@@ -146,9 +146,10 @@ def load_pretrained(log_dir, model, load_file):
     pretrained_keys = pre_trained_model.keys()
     process_pre = []
     for i in pretrained_keys:
-        print(i)
-        print(i.split("_")[1:][0])
-        process_pre.append(i.split("_")[1:][0])
+        if "_" in i:
+            process_pre.append(i.split("_")[1:][0])
+        else:
+            process_pre.append(i)
     my_model_kvpair = model.state_dict()
     for key,value in my_model_kvpair.items():
         if key.split("_")[1:][0] in process_pre:

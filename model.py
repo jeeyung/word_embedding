@@ -82,10 +82,10 @@ class word_embed_ng(nn.Module):
         self.context_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
         self.is_attn = is_attn
         self.bidirectional = bidirectional
+        self.hidden_size = hidden_size
         if self.bidirectional:
             self.hidden_size = hidden_size*2 
         self.k = k
-        self.hidden_size = hidden_size
         self.model_name = models
         self.cen_add_fc= nn.Sequential(
             nn.Linear(hidden_size, embed_size)

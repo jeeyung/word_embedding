@@ -146,6 +146,7 @@ def load_pretrained(log_dir, model, load_file):
     pretrained_keys = pre_trained_model.keys()
     process_pre = []
     for i in pretrained_keys:
+        print(i)
         print(i.split("_")[1:][0])
         process_pre.append(i.split("_")[1:][0])
     my_model_kvpair = model.state_dict()

@@ -52,11 +52,6 @@ class Trainer(object):
     def train_epoch(self):
         self.scheduler.step()
         for i, (center,context, neg) in enumerate(self.text_loader):
-            if self.args.evaluation:
-                if self.args.dataset == "wiki_dump/":
-                    evaluation(self.args, self.writer, self.model, self.device, self.text_loader, self.dataset_order)
-                else:
-                    evaluation(self.args, self.writer, self.model, self.device, self.text_loader, self.epoch)
             if self.args.is_character:
                 center, center_len = center
                 context, context_len = context

@@ -140,8 +140,8 @@ def init_process(args):
         world_size=args.world_size
     )
 
-def load_pretrained(model, load_file):
-    pre_trained_model = torch.load(args.log_dir + load_file)
+def load_pretrained(log_dir, model, load_file):
+    pre_trained_model = torch.load(log_dir + load_file)
     new = list(pre_trained_model.items())
     pretrained_keys = pre_trained_model.keys()
     my_model_kvpair = my_model.state_dict()
@@ -183,7 +183,7 @@ def train(args):
     model= model.to(device)
     print("made model")
     if args.load_pretrained:
-        model = load_pretrained(model, args.load_pretrained_code)
+        model = load_pretrained(args.logdir, model, args.load_pretrained_code)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = StepLR(optimizer, step_size=10, gamma=0.9)
     if args.load_model_code is not None:

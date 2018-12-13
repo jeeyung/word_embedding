@@ -150,7 +150,7 @@ def load_pretrained(log_dir, model, load_file):
             process_pre.append(i.split("_")[1:][0])
         else:
             process_pre.append(i)
-    print(proecess_pre)
+    print(process_pre)
     my_model_kvpair = model.state_dict()
     for key,value in my_model_kvpair.items():
         if key.split("_")[1:][0] in process_pre:

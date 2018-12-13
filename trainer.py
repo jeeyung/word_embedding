@@ -145,7 +145,7 @@ def load_pretrained(log_dir, model, load_file):
     new = list(pre_trained_model.items())
     pretrained_keys = pre_trained_model.keys()
     my_model_kvpair = model.state_dict()
-    for key,value in my_model_kvpair.item():
+    for key,value in my_model_kvpair.items():
         if key.split("_")[1:] in pretrained_keys:
             pre_index = pretrained_keys.index(key.split("_")[1:])
             layer_name, weights = new[pre_index]

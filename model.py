@@ -124,7 +124,9 @@ class word_embed_ng(nn.Module):
 
     def cal_loss(self, x, y, neg):
         score_target = torch.bmm(x.unsqueeze(1),y.unsqueeze(2))
+        print(score_target)
         score_neg = torch.bmm(x.unsqueeze(1), neg.transpose(0,1).transpose(1,2))
+        print(score_neg)
         loss = -F.logsigmoid(score_target).sum() + -F.logsigmoid(-score_neg).sum()
         return loss
 
@@ -179,11 +181,11 @@ class word_embed_ng(nn.Module):
     def get_center_embedding(self, center, center_len):
         embedded_cen, _ = self.center_generator(center, center_len)
         if self.model_name == "fc_acti":
-            embedding = self.cen_add_fc_activation(embedded_cen)
+            embedding = self.add_fc_activation_cen(embedded_cen)
         elif self.model_name == "fc":
-            embedding = self.cen_add_fc(embedded_cen)
+            embedding = self.add_fc_cen(embedded_cen)
         else:
-            embedding = self.cen_add_mlp(embedded_cen)
+            embedding = self.add_mlp_cen(embedded_cen)
         return embedding
 
 class pretrained(nn.Module):

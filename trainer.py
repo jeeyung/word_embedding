@@ -144,12 +144,13 @@ def load_pretrained(log_dir, model, load_file):
     pre_trained_model = torch.load(log_dir + load_file + '/model.pt')
     new = list(pre_trained_model.items())
     pretrained_keys = pre_trained_model.keys()
-    print(pretrained_keys)
+    process_pre = []
+    for i in pretrained_keys:
+        process_pre.append(i.split("_")[1:][0])
     my_model_kvpair = model.state_dict()
     for key,value in my_model_kvpair.items():
-        print(key.split("_")[1:])
-        if key.split("_")[1:][0] in pretrained_keys:
-            pre_index = pretrained_keys.index(key.split("_")[1:])
+        if key.split("_")[1:][0] in process_pre:
+            pre_index = pretrained_key.index(key.split("_")[1:][0])
             layer_name, weights = new[pre_index]
             my_model_kvpair[key] = weights
     model.load_state_dict(my_model_kvpair)

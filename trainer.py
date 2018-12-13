@@ -140,7 +140,19 @@ def init_process(args):
         world_size=args.world_size
     )
 
-
+def load_pretrained(model, load_file):
+    pre_trained_model = torch.load(args.log_dir + load_file)
+    new = list(pre_trained_model.items())
+    pretrained_keys = pre_trained_model.keys()
+    my_model_kvpair = my_model.state_dict()
+    for key,value in my_model_kvpair.item():
+        if key.split("_")[1:] in pretrained_keys:
+            pre_index = pretrained_keys.index(key.split("_")[1:])
+            layer_name, weights = new[pre_index]
+            my_model_kvpair[key] = weights
+    model.load_state_dict(my_model_kvpair)
+    return model
+    
 def train(args):
     if args.multi_node:
         init_process(args)
@@ -170,6 +182,8 @@ def train(args):
                                 args.neg_sample_size, args.bidirectional, args.multigpu, args.device, args.model_category)
     model= model.to(device)
     print("made model")
+    if args.load_pretrained:
+        model = load_pretrained(model, args.load_pretrained_code)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = StepLR(optimizer, step_size=10, gamma=0.9)
     if args.load_model_code is not None:
@@ -177,10 +191,10 @@ def train(args):
             model_name = '/model_best.pt'
         else:
             model_name = '/model.pt'
-        model.load_state_dict(torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage))  
-        # checkpoint = torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage)
-        # args.dataset_order += checkpoint['dataset_order']
-        # model.load_state_dict(checkpoint['model_state_dict'])
+        # model.load_state_dict(torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage))  
+        checkpoint = torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage)
+        args.dataset_order += checkpoint['dataset_order']
+        model.load_state_dict(checkpoint['model_state_dict'])
         args.timestamp = args.load_model_code[:12]
         print('Model loaded')
     writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)

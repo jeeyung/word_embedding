@@ -51,6 +51,8 @@ def get_config():
     train_arg.add_argument('--multigpu', action='store_true')
     train_arg.add_argument('--is_ngram', action='store_true')
     train_arg.add_argument('--is_attn', action='store_true')
+    train_arg.add_argument('--load_pretrained', action='store_true')
+    train_arg.add_argument('--load-pretrained-code', default=None, type=str)
 
     train_arg.add_argument('--evaluation', action='store_true')
     #for large dataset dataloader

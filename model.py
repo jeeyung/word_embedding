@@ -76,35 +76,46 @@ class skipgram(nn.Module):
         return self.center_embedding(center)
 
 class word_embed_ng(nn.Module):
-    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, fc_hidden, embed_size, k, bidirectional, multigpu, device, models):
+    def __init__(self, char_num, gen_embed_dim, hidden_size, num_layer, dropout, fc_hidden, embed_size, k, bidirectional, multigpu, device, models, is_attn):
         super(word_embed_ng, self).__init__()
         self.center_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
         self.context_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
+        self.is_attn = is_attn
         self.k = k
         self.model_name = models
-        self.add_fc_cen = nn.Sequential(
+        self.cen_add_fc= nn.Sequential(
             nn.Linear(hidden_size, embed_size)
         )
-        self.add_fc_con = nn.Sequential(
+        self.con_add_fc= nn.Sequential(
             nn.Linear(hidden_size, embed_size)
         )
-        self.add_fc_activation_cen = nn.Sequential(
+        self.cen_add_fc_activation= nn.Sequential(
             nn.Linear(hidden_size, embed_size),
             nn.Tanh()
         )
-        self.add_fc_activation_con = nn.Sequential(
+        self.con_add_fc_activation= nn.Sequential(
             nn.Linear(hidden_size, embed_size),
             nn.Tanh()
         )
-        self.add_mlp_cen = nn.Sequential(
+        self.cen_add_mlp= nn.Sequential(
             nn.Linear(hidden_size, fc_hidden),
             nn.Tanh(),
             nn.Linear(fc_hidden, embed_size)
         )
-        self.add_mlp_con = nn.Sequential(
+        self.con_add_mlp = nn.Sequential(
             nn.Linear(hidden_size, fc_hidden),
             nn.Tanh(),
             nn.Linear(fc_hidden, embed_size)
+        )
+        self.cen_attn = nn.Sequential(
+                        nn.Linear(self.hidden_size, attn_size),
+                        nn.Tanh(),
+                        nn.Linear(attn_size, 1)
+        )
+        self.con_attn = nn.Sequential(
+                        nn.Linear(self.hidden_size, attn_size),
+                        nn.Tanh(),
+                        nn.Linear(attn_size, 1)
         )
 
     def cal_loss(self, x, y, neg):
@@ -114,29 +125,46 @@ class word_embed_ng(nn.Module):
         return loss
 
     def forward(self, x, x_len, y, y_len, neg):
-        embedded_cen, _ = self.center_generator(x, x_len)
-        embedded_con, _ = self.context_generator(y, y_len)
+        _, cen_output = self.center_generator(x, x_len)
+        # embedded_con, con_output = self.context_generator(y, y_len)
+        if self.is_attn:
+            b_size = cen_output.size(0)
+            attn = self.cen_attn(cen_output.view(-1, self.hidden_size))
+            attn_weight = F.softmax(attn.view(b_size, -1), dim=1).unsqueeze(2)
+            embedded_cen = (cen_output*attn_weight).sum(dim=1)
         if self.model_name == "fc_acti":
             prediction = self.add_fc_activation_cen(embedded_cen)
             target = self.add_fc_activation_con(embedded_con)
             neg_output =[]
             for i in range(self.k):
-                embedded_neg, _ = self.context_generator(neg[i][0], neg[i][1])
-                neg_output.append(self.add_fc_activation_con(embedded_neg))
+                if self.is_attn:
+                    _, neg_output = self.context_generator(neg[i][0], neg[i][1])
+                    attn = self.con_attn(neg_output.view(-1, self.hidden_size))
+                    attn_weight = F.softmax(attn.view(b_size, -1), dim=1).unsqueeze(2)
+                    embedded_neg = (neg_output*attn_weight).sum(dim=1)
+                    neg_output.append(self.add_fc_activation_con(embedded_neg))
         elif self.model_name == "fc":
             prediction = self.add_fc_cen(embedded_cen)
             target = self.add_fc_con(embedded_con)
             neg_output =[]
             for i in range(self.k):
-                embedded_neg, _ = self.context_generator(neg[i][0], neg[i][1])
-                neg_output.append(self.add_fc_con(embedded_neg))
+                if self.is_attn:
+                    _, neg_output = self.context_generator(neg[i][0], neg[i][1])
+                    attn = self.con_attn(neg_output.view(-1, self.hidden_size))
+                    attn_weight = F.softmax(attn.view(b_size, -1), dim=1).unsqueeze(2)
+                    embedded_neg = (neg_output*attn_weight).sum(dim=1)
+                    neg_output.append(self.add_fc_activation_con(embedded_neg))
         else:
             prediction = self.add_mlp_cen(embedded_cen)
             target = self.add_mlp_con(embedded_con)
             neg_output =[]
             for i in range(self.k):
-                embedded_neg, _ = self.context_generator(neg[i][0], neg[i][1])
-                neg_output.append(self.add_mlp_con(embedded_neg))
+                if self.is_attn:
+                    _, neg_output = self.context_generator(neg[i][0], neg[i][1])
+                    attn = self.con_attn(neg_output.view(-1, self.hidden_size))
+                    attn_weight = F.softmax(attn.view(b_size, -1), dim=1).unsqueeze(2)
+                    embedded_neg = (neg_output*attn_weight).sum(dim=1)
+                    neg_output.append(self.add_fc_activation_con(embedded_neg))
         neg_output_tensor = torch.stack(neg_output)
         loss = self.cal_loss(prediction, target, neg_output_tensor)
         return loss

@@ -91,7 +91,7 @@ class Trainer(object):
                     step = i // self.args.log_frequency + math.ceil(self.total_dataset_num // self.args.batch_size // self.args.log_frequency)
                 else:
                     step = i // self.args.log_frequency + self.epoch * len(self.text_loader) // self.args.log_frequency
-                self.writer.add_scalar('Batch loss', loss / self.args.batch_size*distributed.get_world_size(), step)
+                # self.writer.add_scalar('Batch loss', loss / self.args.batch_size*distributed.get_world_size(), step)
                 # plot_embedding(args, model, text_loader, writer, device)
         if self.args.evaluation:
             if self.args.dataset == "wiki_dump/":

@@ -143,7 +143,7 @@ def init_process(args):
 def load_pretrained(log_dir, model, load_file):
     pre_trained_model = torch.load(log_dir + load_file + '/model.pt')
     new = list(pre_trained_model.items())
-    pretrained_keys = pre_trained_model.keys()
+    pretrained_keys = list(pre_trained_model.keys())
     process_pre = []
     for i in pretrained_keys:
         if "_" in i:

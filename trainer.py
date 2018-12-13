@@ -82,16 +82,16 @@ class Trainer(object):
                 order = self.epoch
             if i % self.args.log_frequency == 0:
                 print('Train dataset: {} [{}/{} ({:.0f}%)] Loss: {:.8f}'.format(
-                    # order, i* int(self.args.batch_size/distributed.get_world_size()), len(self.text_loader.dataset),
-                    order, i* int(self.args.batch_size), len(self.text_loader.dataset),
+                    order, i* int(self.args.batch_size/distributed.get_world_size()), len(self.text_loader.dataset),
+                    # order, i* int(self.args.batch_size), len(self.text_loader.dataset),
                     100. * i / len(self.text_loader),
-                    # loss/self.args.batch_size*distributed.get_world_size()))
-                    loss/self.args.batch_size))
+                    loss/self.args.batch_size*distributed.get_world_size()))
+                    # loss/self.args.batch_size))
                 if self.args.dataset == "wiki_dump/":
                     step = i // self.args.log_frequency + math.ceil(self.total_dataset_num // self.args.batch_size // self.args.log_frequency)
                 else:
                     step = i // self.args.log_frequency + self.epoch * len(self.text_loader) // self.args.log_frequency
-                # self.writer.add_scalar('Batch loss', loss / self.args.batch_size*distributed.get_world_size(), step)
+                self.writer.add_scalar('Batch loss', loss / self.args.batch_size*distributed.get_world_size(), step)
                 # plot_embedding(args, model, text_loader, writer, device)
         if self.args.evaluation:
             if self.args.dataset == "wiki_dump/":

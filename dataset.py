@@ -221,7 +221,7 @@ class PretrainedDataset(Dataset):
         #for glove
         tmp_file = get_tmpfile("test_word2vec.txt")
         glove2word2vec(glove_input_file=path, word2vec_output_file=tmp_file)
-        model = word2vec.KeyedVectors.load_word2vec_format(tmp_file, binary=False, limit=200000)
+        model = word2vec.KeyedVectors.load_word2vec_format(tmp_file, binary=False, limit=500000)
         if self.is_ngram:
             self.word2idx = {self.preprocess(word): idx for idx, word in enumerate(model.wv.index2word)
                             if len(self.preprocess(word))>1}

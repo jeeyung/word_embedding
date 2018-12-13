@@ -81,6 +81,7 @@ class word_embed_ng(nn.Module):
         self.center_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
         self.context_generator = generator(char_num, gen_embed_dim, hidden_size, num_layer, dropout, bidirectional, multigpu, device)
         self.is_attn = is_attn
+        self.bidirectional = bidirectional
         if self.bidirectional:
             self.hidden_size = hidden_size*2 
         self.k = k

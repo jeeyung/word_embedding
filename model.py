@@ -162,7 +162,7 @@ class word_embed_ng(nn.Module):
                     attn = self.con_attn(neg_output.view(-1, self.hidden_size))
                     attn_weight = F.softmax(attn.view(b_size, -1), dim=1).unsqueeze(2)
                     embedded_neg = (neg_output*attn_weight).sum(dim=1)
-                    neg_outputs.append(self.con_add_fc_activation(embedded_neg))
+                    neg_outputs.append(self.con_add_fc(embedded_neg))
         else:
             prediction = self.add_mlp_cen(embedded_cen)
             target = self.add_mlp_con(embedded_con)

@@ -139,14 +139,13 @@ class word_embed_ng(nn.Module):
             attn = self.con_attn(con_output.view(-1, self.hidden_size))
             attn_weight = F.softmax(attn.view(b_size, -1), dim=1).unsqueeze(2)
             embedded_con = (con_output*attn_weight).sum(dim=1)
-            
         if self.model_name == "fc_acti":
             prediction = self.add_fc_activation_cen(embedded_cen)
             target = self.add_fc_activation_con(embedded_con)
             neg_output =[]
             for i in range(self.k):
                 if self.is_attn:
-                    _, neg_output = self.context_generator(neg[i][0], neg[i][1])
+                    _, neg_output= self.context_generator(neg[i][0], neg[i][1])
                     attn = self.con_attn(neg_output.view(-1, self.hidden_size))
                     attn_weight = F.softmax(attn.view(b_size, -1), dim=1).unsqueeze(2)
                     embedded_neg = (neg_output*attn_weight).sum(dim=1)
@@ -154,14 +153,14 @@ class word_embed_ng(nn.Module):
         elif self.model_name == "fc":
             prediction = self.cen_add_fc(embedded_cen)
             target = self.con_add_fc(embedded_con)
-            neg_output =[]
+            neg_outputs =[]
             for i in range(self.k):
                 if self.is_attn:
                     _, neg_output = self.context_generator(neg[i][0], neg[i][1])
                     attn = self.con_attn(neg_output.view(-1, self.hidden_size))
                     attn_weight = F.softmax(attn.view(b_size, -1), dim=1).unsqueeze(2)
                     embedded_neg = (neg_output*attn_weight).sum(dim=1)
-                    neg_output.append(self.con_add_fc_activation(embedded_neg))
+                    neg_outputs.append(self.con_add_fc_activation(embedded_neg))
         else:
             prediction = self.add_mlp_cen(embedded_cen)
             target = self.add_mlp_con(embedded_con)

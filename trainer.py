@@ -150,12 +150,15 @@ def load_pretrained(log_dir, model, load_file):
             process_pre.append(i.split("_")[1:][0])
         else:
             process_pre.append(i)
+    print(proecess_pre)
     my_model_kvpair = model.state_dict()
     for key,value in my_model_kvpair.items():
         if key.split("_")[1:][0] in process_pre:
             pre_index = pretrained_keys.index(key.split("_")[1:][0])
             layer_name, weights = new[pre_index]
             my_model_kvpair[key] = weights
+        else:
+            continue
     model.load_state_dict(my_model_kvpair)
     return model
 

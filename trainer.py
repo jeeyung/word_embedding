@@ -152,7 +152,7 @@ def load_pretrained(model, load_file):
             my_model_kvpair[key] = weights
     model.load_state_dict(my_model_kvpair)
     return model
-    
+
 def train(args):
     if args.multi_node:
         init_process(args)
@@ -179,7 +179,7 @@ def train(args):
         else:
             model = word_embed_ng(args.vocab_size, args.char_embed_size, args.hidden_size,
                                 args.num_layer, args.dropout, args.mlp_size, args.embed_size, 
-                                args.neg_sample_size, args.bidirectional, args.multigpu, args.device, args.model_category)
+                                args.neg_sample_size, args.bidirectional, args.multigpu, args.device, args.model_category, args.is_attn)
     model= model.to(device)
     print("made model")
     if args.load_pretrained:

@@ -177,10 +177,10 @@ def train(args):
             model_name = '/model_best.pt'
         else:
             model_name = '/model.pt'
-        # model.load_state_dict(torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage))  
-        checkpoint = torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage)
-        args.dataset_order += checkpoint['dataset_order']
-        model.load_state_dict(checkpoint['model_state_dict'])
+        model.load_state_dict(torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage))  
+        # checkpoint = torch.load(args.log_dir + args.load_model_code + model_name, map_location=lambda storage,loc: storage)
+        # args.dataset_order += checkpoint['dataset_order']
+        # model.load_state_dict(checkpoint['model_state_dict'])
         args.timestamp = args.load_model_code[:12]
         print('Model loaded')
     writer = SummaryWriter(args.log_dir + args.timestamp + '_' + args.config)

@@ -85,7 +85,8 @@ class Trainer(object):
                     # order, i* int(self.args.batch_size/distributed.get_world_size()), len(self.text_loader.dataset),
                     order, i* int(self.args.batch_size), len(self.text_loader.dataset),
                     100. * i / len(self.text_loader),
-                    loss/self.args.batch_size*distributed.get_world_size()))
+                    # loss/self.args.batch_size*distributed.get_world_size()))
+                    loss/self.args.batch_size))
                 if self.args.dataset == "wiki_dump/":
                     step = i // self.args.log_frequency + math.ceil(self.total_dataset_num // self.args.batch_size // self.args.log_frequency)
                 else:
@@ -151,7 +152,6 @@ def load_pretrained(log_dir, model, load_file):
             process_pre.append(i.split("_",1)[1:][0])
         else:
             process_pre.append(i)
-    print(process_pre)
     my_model_kvpair = model.state_dict()
     for key,value in my_model_kvpair.items():
         if "_" in key:
@@ -165,7 +165,6 @@ def load_pretrained(log_dir, model, load_file):
             pre_index = process_pre.index(key)
             layer_name, weights = new[pre_index]
             my_model_kvpair[key] = weights
-
     model.load_state_dict(my_model_kvpair)
     return model
 

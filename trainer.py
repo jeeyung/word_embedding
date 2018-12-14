@@ -63,13 +63,13 @@ class Trainer(object):
                     padded_neg, neg_len = neg[k]
                     n.append((padded_neg.to(self.device), neg_len))
                 self.optimizer.zero_grad()
-                loss = self.model(center, center_len, context, context_len, n)
+                loss = self.model(center, center_len, context, context_len, n).loss()
             else:
                 center = center.to(self.device)
                 context = context.to(self.device)
                 neg = neg.to(self.device)
                 self.optimizer.zero_grad()
-                loss = self.model(center, context, neg)
+                loss = self.model(center, context, neg).sum()
             loss.backward()
             if not self.args.model_name == 'sgns':
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.clip)
